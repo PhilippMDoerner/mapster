@@ -1,11 +1,11 @@
 import ./mapster/mapping
 export mapping
 
-type A = object
+type A = ref object
   name: string
   id: int
   
-type B = object
+type B = ref object
   name: string
   otherName: string
   otherId: string
@@ -19,6 +19,7 @@ type C = object
 type D = object
   name: string
   id: int
+  
   
 let a = A(name: "Potato", id: 4)
 
@@ -35,8 +36,9 @@ const mapperAToB = generateMapper(A, B, @[
   mapNothing("ignoreMe"),
   mapFromProc("doubleId", proc(source: A): int = source.id * FACTOR)
 ])
-const expectedB = B(name: "Potato", otherName: "Potato", ignoreMe: 0, doubleId: 8, otherId: "4")
-echo expectedB == mapperAToB(a)
+let expectedB = B(name: "Potato", otherName: "Potato", ignoreMe: 0, doubleId: 8, otherId: "4")
+let result = mapperAToB(a)
+echo expectedB[] == result[]
 
 
 const mapperAToC = generateMapper(A, C, @[
@@ -44,7 +46,6 @@ const mapperAToC = generateMapper(A, C, @[
 ])
 const expectedC = C(name: "Potato", pk: 4)
 echo expectedC == mapperAToC(a)
-
 
 const mapperAToD = generateMapper(A, D, @[])
 const expectedD = D(name: "Potato", id: 4)

@@ -1,10 +1,18 @@
 import ./fieldUtils
 import std/[strformat, macros, sequtils, options, sugar]
 
+export strformat
+
 type MappingKind = enum
   mkName, mkProc, mkNone, mkFieldProc
 
 type Mapping = object
+  ## Defines ways on how to map field from object A to object B.
+  ## The available ways are:
+  ## - mkNone: Ignore the field, do not transfer any value to field `target` on object B
+  ## - mkName: Transfer the value of field `sourceFieldName` on object A to field `target`on object B
+  ## - mkProc: Transfer the output of proc `mapProc` which takes in object A as parameter to field `target` on object B
+  ## - mkFieldProc: Transfer the output of proc `fieldProc` which takes in the field `sourceFieldParameter` on object A as parameter to field `target` on object B
   target: string
   case kind: MappingKind
   of mkName: 
@@ -17,19 +25,23 @@ type Mapping = object
     fieldProc: pointer
     sourceFieldParameter: string
     
-proc mapFromField*(sourceName: string, targetName: string): Mapping =
+func mapFromField*(sourceName: string, targetName: string): Mapping =
+  ## Generates a Mapping to map the field `sourceFieldName` to the field `targetName` 
   Mapping(kind: mkName, target: targetName, sourceFieldName: sourceName)
 
-proc mapFromProc*(targetName: string, mapProc: pointer): Mapping =
+func mapFromProc*(targetName: string, mapProc: pointer): Mapping =
+  ## Generate a Mapping to map the output of `mapProc` to the field `targetName`
   Mapping(kind: mkProc, target: targetName, mapProc: mapProc)
   
-proc mapNothing*(targetName: string): Mapping =
+func mapNothing*(targetName: string): Mapping =
+  ## Generate a Mapping to map nothing to the field `targetName`. It will retain whatever value it is default initialized with.
   Mapping(kind: mkNone, target: targetName)
 
-proc mapFromFieldProc*(sourceName: string, targetName: string, mapProc: pointer): Mapping =
+func mapFromFieldProc*(sourceName: string, targetName: string, mapProc: pointer): Mapping =
+  ## Generate a Mapping to map the output of `mapProc` using the `sourceName`-field as parameter to the field `targetName`.
   Mapping(kind: mkFieldProc, target: targetName, fieldProc: mapProc, sourceFieldParameter: sourceName)
 
-proc getMappingForField(mappings: seq[Mapping], fieldName: string): Option[Mapping] {.compileTime.}=
+func getMappingForField(mappings: seq[Mapping], fieldName: string): Option[Mapping] {.compileTime.}=
   for mapping in mappings:
     if mapping.target == fieldName:
       return some mapping
@@ -37,9 +49,20 @@ proc getMappingForField(mappings: seq[Mapping], fieldName: string): Option[Mappi
   return none(Mapping)
 
 type MapProc[SOURCE, TARGET] = proc(x: SOURCE): TARGET
+
+template getIterator[T: object](t: typedesc[T]): untyped =
+  T().fieldPairs
+
+template getIterator[T: ref object](t: typedesc[T]): untyped =
+  T()[].fieldPairs
+  
 proc generateMapper*[SOURCETYPE, TARGETTYPE](x: typedesc[SOURCETYPE], y: typedesc[TARGETTYPE], mappings: static seq[Mapping]): MapProc[SOURCETYPE, TARGETTYPE] =
   return proc(source: SOURCETYPE): TARGETTYPE =
-    for targetName, dummyTargetValue in TARGETTYPE().fieldPairs:
+    const isRef = TARGETTYPE is ref object
+    when isRef:
+      result = TARGETTYPE()
+    
+    for targetName, dummyTargetValue in TARGETTYPE.getIterator():
       const mappingOpt = mappings.getMappingForField(targetName)
       const hasCustomMapping = mappingOpt.isSome() 
       
@@ -54,7 +77,7 @@ proc generateMapper*[SOURCETYPE, TARGETTYPE](x: typedesc[SOURCETYPE], y: typedes
           let targetValue = source.getField(sourceName)
           result.setField(targetName, targetValue)
           
-        elif mapping.kind == mkProc:                    
+        elif mapping.kind == mkProc:        
           const mapProc = cast[proc(source: SOURCETYPE): dummyTargetValue.type() {.nimcall.}](mapping.mapProc)
           let targetValue: dummyTargetValue.type() = mapProc(source)
           result.setField(targetName, targetValue)
