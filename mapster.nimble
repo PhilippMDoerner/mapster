@@ -9,7 +9,7 @@ srcDir        = "src"
 
 # Dependencies
 
-requires "nim >= 1.9.1"
+requires "nim >= 1.6.0"
 
 task debug, "Compile a debug build of the library":
     --run
