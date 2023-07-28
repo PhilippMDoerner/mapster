@@ -31,22 +31,22 @@ proc toString(x: int): string = $x
 proc getDoubleId(source: A): int = source.id * 2
 
 const mapperAToB = generateMapper(A, B, @[
-  mapFromField("name", "otherName"),
-  mapFromFieldProc("id", "otherId", proc(x: int): string = $x),
-  mapNothing("ignoreMe"),
-  mapFromProc("doubleId", proc(source: A): int = source.id * FACTOR)
+  mapFieldToField("name", "otherName"),
+  mapFieldProcToField("id", "otherId", proc(x: int): string = $x),
+  mapNothingToField("ignoreMe"),
+  mapProcToField("doubleId", proc(source: A): int = source.id * FACTOR)
 ])
 let expectedB = B(name: "Potato", otherName: "Potato", ignoreMe: 0, doubleId: 8, otherId: "4")
 let result = mapperAToB(a)
-echo expectedB == result
+echo expectedB[] == result[]
 
 
 const mapperAToC = generateMapper(A, C, @[
-  mapFromField("id", "pk")
+  mapFieldToField("id", "pk")
 ])
 let expectedC = C(name: "Potato", pk: 4)
-echo expectedC == mapperAToC(a)
+echo expectedC[] == mapperAToC(a)[]
 
 const mapperAToD = generateMapper(A, D, @[])
 let expectedD = D(name: "Potato", id: 4)
-echo expectedD == mapperAToD(a)
+echo expectedD[] == mapperAToD(a)[]

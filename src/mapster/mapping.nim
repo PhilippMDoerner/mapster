@@ -7,7 +7,7 @@ type MapKind = enum
   mkName, mkProc, mkNone, mkFieldProc
 
 type Mapping = object
-  ## Defines ways on how to map field from object A to object B.
+  ## Defines ways on how to map field from object A to object B for `generateMapper`.
   ## The available ways are:
   ## - mkNone: Ignore the field, do not transfer any value to field `target` on object B
   ## - mkName: Transfer the value of field `sourceFieldName` on object A to field `target`on object B
@@ -15,30 +15,30 @@ type Mapping = object
   ## - mkFieldProc: Transfer the output of proc `fieldProc` which takes in the field `sourceFieldParameter` on object A as parameter to field `target` on object B
   target: string
   case kind: MapKind
-  of mkName: 
-    sourceFieldName: string
   of mkNone:
     discard
+  of mkName: 
+    sourceFieldName: string
   of mkProc:
     mapProc: pointer
   of mkFieldProc:
     fieldProc: pointer
     sourceFieldParameter: string
     
-func mapFromField*(sourceName: string, targetName: string): Mapping =
+func mapFieldToField*(sourceName: string, targetName: string): Mapping =
   ## Generates a Mapping to map the field `sourceFieldName` to the field `targetName` 
   Mapping(kind: MapKind.mkName, target: targetName, sourceFieldName: sourceName)
 
-func mapFromProc*(targetName: string, mapProc: pointer): Mapping =
+func mapProcToField*(targetName: string, mapProc: pointer): Mapping =
   ## Generate a Mapping to map the output of `mapProc` to the field `targetName`
   Mapping(kind: MapKind.mkProc, target: targetName, mapProc: mapProc)
   
-func mapNothing*(targetName: string): Mapping =
+func mapNothingToField*(targetName: string): Mapping =
   ## Generate a Mapping to map nothing to the field `targetName`. It will retain whatever value it is default initialized with.
   Mapping(kind: MapKind.mkNone, target: targetName)
 
-func mapFromFieldProc*(sourceName: string, targetName: string, mapProc: pointer): Mapping =
-  ## Generate a Mapping to map the output of `mapProc` using the `sourceName`-field as parameter to the field `targetName`.
+func mapFieldProcToField*(sourceName: string, targetName: string, mapProc: pointer): Mapping =
+  ## Generate a Mapping to map the output of `mapProc` using the `sourceName`-field on as parameter to the field `targetName`.
   Mapping(kind: MapKind.mkFieldProc, target: targetName, fieldProc: mapProc, sourceFieldParameter: sourceName)
 
 func getMappingForField(mappings: seq[Mapping], fieldName: string): Option[Mapping] {.compileTime.}=
