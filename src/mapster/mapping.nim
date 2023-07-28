@@ -3,7 +3,7 @@ import std/[strformat, macros, sequtils, options, sugar]
 
 export strformat
 
-type MappingKind = enum
+type MapKind = enum
   mkName, mkProc, mkNone, mkFieldProc
 
 type Mapping = object
@@ -14,7 +14,7 @@ type Mapping = object
   ## - mkProc: Transfer the output of proc `mapProc` which takes in object A as parameter to field `target` on object B
   ## - mkFieldProc: Transfer the output of proc `fieldProc` which takes in the field `sourceFieldParameter` on object A as parameter to field `target` on object B
   target: string
-  case kind: MappingKind
+  case kind: MapKind
   of mkName: 
     sourceFieldName: string
   of mkNone:
@@ -27,19 +27,19 @@ type Mapping = object
     
 func mapFromField*(sourceName: string, targetName: string): Mapping =
   ## Generates a Mapping to map the field `sourceFieldName` to the field `targetName` 
-  Mapping(kind: mkName, target: targetName, sourceFieldName: sourceName)
+  Mapping(kind: MapKind.mkName, target: targetName, sourceFieldName: sourceName)
 
 func mapFromProc*(targetName: string, mapProc: pointer): Mapping =
   ## Generate a Mapping to map the output of `mapProc` to the field `targetName`
-  Mapping(kind: mkProc, target: targetName, mapProc: mapProc)
+  Mapping(kind: MapKind.mkProc, target: targetName, mapProc: mapProc)
   
 func mapNothing*(targetName: string): Mapping =
   ## Generate a Mapping to map nothing to the field `targetName`. It will retain whatever value it is default initialized with.
-  Mapping(kind: mkNone, target: targetName)
+  Mapping(kind: MapKind.mkNone, target: targetName)
 
 func mapFromFieldProc*(sourceName: string, targetName: string, mapProc: pointer): Mapping =
   ## Generate a Mapping to map the output of `mapProc` using the `sourceName`-field as parameter to the field `targetName`.
-  Mapping(kind: mkFieldProc, target: targetName, fieldProc: mapProc, sourceFieldParameter: sourceName)
+  Mapping(kind: MapKind.mkFieldProc, target: targetName, fieldProc: mapProc, sourceFieldParameter: sourceName)
 
 func getMappingForField(mappings: seq[Mapping], fieldName: string): Option[Mapping] {.compileTime.}=
   for mapping in mappings:
@@ -50,12 +50,6 @@ func getMappingForField(mappings: seq[Mapping], fieldName: string): Option[Mappi
 
 type MapProc[SOURCE, TARGET] = proc(x: SOURCE): TARGET
 
-template getIterator[T: object](t: typedesc[T]): untyped =
-  T().fieldPairs
-
-template getIterator[T: ref object](t: typedesc[T]): untyped =
-  T()[].fieldPairs
-  
 proc generateMapper*[SOURCETYPE, TARGETTYPE](x: typedesc[SOURCETYPE], y: typedesc[TARGETTYPE], mappings: static seq[Mapping]): MapProc[SOURCETYPE, TARGETTYPE] =
   return proc(source: SOURCETYPE): TARGETTYPE =
     const isRef = TARGETTYPE is ref object
@@ -69,20 +63,20 @@ proc generateMapper*[SOURCETYPE, TARGETTYPE](x: typedesc[SOURCETYPE], y: typedes
       when hasCustomMapping:
         const mapping = mappingOpt.get()
         
-        when mapping.kind == mkNone:
+        when mapping.kind == MapKind.mkNone:
           discard # Do nothing
       
-        elif mapping.kind == mkName:
+        elif mapping.kind == MapKind.mkName:
           const sourceName = mapping.sourceFieldName
           let targetValue = source.getField(sourceName)
           result.setField(targetName, targetValue)
           
-        elif mapping.kind == mkProc:        
+        elif mapping.kind == MapKind.mkProc:        
           const mapProc = cast[proc(source: SOURCETYPE): dummyTargetValue.type() {.nimcall.}](mapping.mapProc)
           let targetValue: dummyTargetValue.type() = mapProc(source)
           result.setField(targetName, targetValue)
           
-        elif mapping.kind == mkFieldProc:
+        elif mapping.kind == MapKind.mkFieldProc:
           const sourceName = mapping.sourceFieldParameter
           let sourceValue = source.getField(sourceName)
                     

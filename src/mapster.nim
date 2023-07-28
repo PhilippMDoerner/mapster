@@ -1,7 +1,7 @@
 import ./mapster/mapping
 export mapping
 
-type A = ref object
+type A = object
   name: string
   id: int
   
@@ -12,11 +12,11 @@ type B = ref object
   ignoreMe: int
   doubleId: int
   
-type C = object
+type C = ref object
   name: string
   pk: int
   
-type D = object
+type D = ref object
   name: string
   id: int
   
@@ -38,15 +38,15 @@ const mapperAToB = generateMapper(A, B, @[
 ])
 let expectedB = B(name: "Potato", otherName: "Potato", ignoreMe: 0, doubleId: 8, otherId: "4")
 let result = mapperAToB(a)
-echo expectedB[] == result[]
+echo expectedB == result
 
 
 const mapperAToC = generateMapper(A, C, @[
   mapFromField("id", "pk")
 ])
-const expectedC = C(name: "Potato", pk: 4)
+let expectedC = C(name: "Potato", pk: 4)
 echo expectedC == mapperAToC(a)
 
 const mapperAToD = generateMapper(A, D, @[])
-const expectedD = D(name: "Potato", id: 4)
+let expectedD = D(name: "Potato", id: 4)
 echo expectedD == mapperAToD(a)

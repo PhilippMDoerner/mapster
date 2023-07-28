@@ -14,3 +14,10 @@ proc hasField*[T](obj: T, fieldName: static string): bool {.compileTime.} =
 
 proc hasField*[T: object](t: typedesc[T], fieldName: static string): bool {.compileTime.} =
   result = compiles(T().getField(fieldName))
+  
+template getIterator*[T: object](t: typedesc[T]): untyped =
+  T().fieldPairs
+
+template getIterator*[T: ref object](t: typedesc[T]): untyped =
+  T()[].fieldPairs
+  
