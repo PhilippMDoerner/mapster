@@ -1,5 +1,6 @@
 import ./mapster/mapping
 export mapping
+import std/sugar
 
 type A = object
   name: string
@@ -20,8 +21,12 @@ type D = ref object
   name: string
   id: int
   
+type E = object
+  a: A
+  
   
 let a = A(name: "Potato", id: 4)
+let e = E(a: a)
 
 const FACTOR = 2
 
@@ -37,8 +42,15 @@ const mapperAToB = generateMapper(A, B, @[
   mapProcToField("doubleId", proc(source: A): int = source.id * FACTOR)
 ])
 let expectedB = B(name: "Potato", otherName: "Potato", ignoreMe: 0, doubleId: 8, otherId: "4")
-let result = mapperAToB(a)
-echo expectedB[] == result[]
+echo expectedB[] == mapperAToB(a)[]
+
+const mapperEToA = generateMapper(E, A, @[
+  mapConstToField("name", "somevalue"),
+  mapConstToField("id", 5)
+])
+let expectedA = A(name: e.a.name, id: e.a.id)
+echo mapperEToA(e) == expectedA
+echo mapperEToA(e)
 
 
 const mapperAToC = generateMapper(A, C, @[
@@ -50,3 +62,4 @@ echo expectedC[] == mapperAToC(a)[]
 const mapperAToD = generateMapper(A, D, @[])
 let expectedD = D(name: "Potato", id: 4)
 echo expectedD[] == mapperAToD(a)[]
+
