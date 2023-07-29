@@ -1,13 +1,13 @@
-import std/[macros]
+import std/[macros, strutils]
 
-macro getField*(obj: untyped, fieldName: static string): untyped =
-  nnkDotExpr.newTree(obj, ident(fieldName))
-  
-macro getField*[T](someType: typedesc[T], fieldName: static string): untyped =
-  nnkDotExpr.newTree(someType, ident(fieldName))
+macro getField*(a: typed, str: static string): untyped =
+  let theSplit = str.split(".")
+  result = a
+  for a in theSplit:
+    result = nnkDotExpr.newTree(result, ident(a))
   
 template setField*[T](obj: var T, fieldName: static string, value: untyped) =
-  obj.getField(fieldName) = value
+  getField(obj, fieldName) = value
 
 proc hasField*[T](obj: T, fieldName: static string): bool {.compileTime.} =
   result = compiles(obj.getField(fieldName))
