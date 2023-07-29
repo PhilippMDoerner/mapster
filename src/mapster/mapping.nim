@@ -13,6 +13,7 @@ type Mapping = object
   ## - mkName: Transfer the value of field `sourceFieldName` on object A to field `target`on object B
   ## - mkProc: Transfer the output of proc `mapProc` which takes in object A as parameter to field `target` on object B
   ## - mkFieldProc: Transfer the output of proc `fieldProc` which takes in the field `sourceFieldParameter` on object A as parameter to field `target` on object B
+  ## - mkConst: Transfer the constant value produced by the proc `constProc` into the field `target` on object B
   target: string
   case kind: MapKind
   of mkNone:
@@ -44,6 +45,7 @@ func mapFieldProcToField*(sourceName: string, targetName: string, mapProc: point
   Mapping(kind: MapKind.mkFieldProc, target: targetName, fieldProc: mapProc, sourceFieldParameter: sourceName)
  
 template mapConstToField*(targetName: string, value: untyped): Mapping =
+  ## Generate a Mapping to map the static value `value` to the field `targetName`.
   Mapping(kind: MapKind.mkConst, target: targetName, constProc: () => value)
 
 func getMappingForField(mappings: seq[Mapping], fieldName: string): Option[Mapping] {.compileTime.}=
