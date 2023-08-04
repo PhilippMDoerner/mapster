@@ -51,9 +51,7 @@ proc generateMapper*[SOURCETYPE, TARGETTYPE](
   mappings: static seq[Mapping]
 ): MapProc[SOURCETYPE, TARGETTYPE] =
   return proc(source1: SOURCETYPE): TARGETTYPE =
-    const isRef = TARGETTYPE is ref object
-    when isRef:
-      result = TARGETTYPE()
+    result = TARGETTYPE()
     
     for targetName, dummyTargetValue in TARGETTYPE.getIterator():
       const mappingOpt = mappings.getMappingForField(targetName)
@@ -79,9 +77,7 @@ proc generateMapper*[SOURCETYPE1, SOURCETYPE2, TARGETTYPE](
   mappings: static seq[Mapping]
 ): MapProc2[SOURCETYPE1, SOURCETYPE2, TARGETTYPE] =
   return proc(source1: SOURCETYPE1, source2: SOURCETYPE2): TARGETTYPE =
-    const isRef = TARGETTYPE is ref object
-    when isRef:
-      result = TARGETTYPE()
+    result = TARGETTYPE()
     
     for targetName, dummyTargetValue in TARGETTYPE.getIterator():
       const mappingOpt = mappings.getMappingForField(targetName)
