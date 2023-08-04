@@ -1,10 +1,19 @@
 import std/[macros, strutils]
 
-macro getField*(a: typed, str: static string): untyped =
-  let theSplit = str.split(".")
-  result = a
-  for a in theSplit:
-    result = nnkDotExpr.newTree(result, ident(a))
+macro getField*(obj: typed, dotExpressionTemplate: static string): untyped =
+  let objectFieldChain = dotExpressionTemplate.split(".")  
+  result = obj
+  for field in objectFieldChain:
+    result = nnkDotExpr.newTree(result, ident(field))
+
+macro generateDotExpression*(dotExpressionTemplate: static string): untyped =
+  let expressionMembers = dotExpressionTemplate.split(".")  
+  let objectVarName = expressionMembers[0]
+  let objectFieldChain = expressionMembers[1..expressionMembers.high]
+  
+  result = ident(objectVarName)
+  for field in objectFieldChain:
+    result = nnkDotExpr.newTree(result, ident(field))
   
 template setField*[T](obj: var T, fieldName: static string, value: untyped) =
   getField(obj, fieldName) = value
