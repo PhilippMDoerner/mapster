@@ -1,5 +1,7 @@
-import ./mapster/mapping
+import ./mapster/[mapGenerator, mapping]
 export mapping
+export mapGenerator
+
 import std/sugar
 
 type A = object
@@ -36,8 +38,8 @@ proc toString(x: int): string = $x
 proc getDoubleId(source: A): int = source.id * 2
 
 const mapperAToB = generateMapper(A, B, @[
-  mapFieldToField("name", "otherName"),
-  mapFieldProcToField("id", "otherId", proc(x: int): string = $x),
+  mapFieldToField("otherName", "source1.name"),
+  mapFieldProcToField("otherId", "source1.id", proc(x: int): string = $x),
   mapNothingToField("ignoreMe"),
   mapProcToField("doubleId", proc(source: A): int = source.id * FACTOR)
 ])
@@ -54,7 +56,7 @@ echo mapperEToA(e)
 
 
 const mapperAToC = generateMapper(A, C, @[
-  mapFieldToField("id", "pk")
+  mapFieldToField("pk", "source1.id")
 ])
 let expectedC = C(name: "Potato", pk: 4)
 echo expectedC[] == mapperAToC(a)[]
