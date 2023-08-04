@@ -20,6 +20,7 @@ type Mapping* = object
   of mkName: 
     sourceFieldName*: string
   of mkProc:
+    sourceParameterName*: string
     mapProc*: pointer
   of mkFieldProc:
     fieldProc*: pointer
@@ -31,9 +32,9 @@ func mapFieldToField*(target: string, source: string): Mapping =
   ## Generates a Mapping to map the field `sourceFieldName` to the field `target` 
   Mapping(kind: MapKind.mkName, target: target, sourceFieldName: source)
 
-func mapProcToField*(target: string, mapProc: pointer): Mapping =
+func mapProcToField*(target: string, mapProc: pointer, source: string = "source1"): Mapping =
   ## Generate a Mapping to map the output of `mapProc` to the field `target`
-  Mapping(kind: MapKind.mkProc, target: target, mapProc: mapProc)
+  Mapping(kind: MapKind.mkProc, target: target, mapProc: mapProc, sourceParameterName: source)
   
 func mapNothingToField*(target: string): Mapping =
   ## Generate a Mapping to map nothing to the field `target`. It will retain whatever value it is default initialized with.
