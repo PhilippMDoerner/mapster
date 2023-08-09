@@ -29,33 +29,27 @@ type E = object
   
 let a = A(name: "Potato", id: 4)
 
-const FACTOR = 2
+# proc mapAToB(source1: A): B {.map.} =
+#     result.otherName = source1.name
+#     result.otherId = $source1.id
+#     result.doubleId = source1.id * 2
+#     result.ignoreMe = 0
 
-proc getIdStr(source: A): string = $source.id
-proc double(x: int): int = 2*x
-proc toString(x: int): string = $x
-proc getDoubleId(source: A): int = source.id * 2
+# proc mapBToA(source: B): A {.map.} = discard
 
-proc mapAToB(source1: A): B {.mapper.} =
-    result.otherName = source1.name
-    result.otherId = $source1.id
-    result.doubleId = source1.id * 2
-    result.ignoreMe = 0
+# let expectedB = B(name: "Potato", otherName: "Potato", ignoreMe: 0, doubleId: 8, otherId: "4", id: 4)
+# echo expectedB == mapAToB(a), "\n", mapAToB(a), " vs. ", expectedB, "\n"
 
-proc mapBToA(source: B): A {.mapper.} = discard
+# echo mapBToA(expectedB)
 
-let expectedB = B(name: "Potato", otherName: "Potato", ignoreMe: 0, doubleId: 8, otherId: "4", id: 4)
-echo expectedB == mapAToB(a), "\n", mapAToB(a), " vs. ", expectedB, "\n"
 
-echo mapBToA(expectedB)
+proc mapperEToA(source: E, source2: A): A {.mapExcept: "source2".} =
+  result.id = 5
+  result.name = "somevalue"
 
-# const mapperEToA = generateMapper(E, A, @[
-#   mapConstToField("name", "somevalue"),
-#   mapConstToField("id", 5)
-# ])
-# let e = E(a: a)
-# let expectedA = A(name: "somevalue", id: 5)
-# echo mapperEToA(e) == expectedA, "\n", mapperEToA(e), " vs. ", expectedA, "\n"
+let e = E(a: a)
+let expectedA = A(name: "somevalue", id: 5)
+echo mapperEToA(e, a) == expectedA, "\n", mapperEToA(e, a), " vs. ", expectedA, "\n"
 
 
 # const mapperAToC = generateMapper(A, C, @[
