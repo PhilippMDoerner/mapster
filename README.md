@@ -19,5 +19,11 @@ Mapster helps by adding all assignments from instance A to B to the proc for you
 TBD
 ### Mapping with custom Logic
 TBD
+
+### Mapping with multiple parameters
+#### Mapping with multiple object parameters
+TBD
+#### Mapping with object and non object parameters
+TBD
 ### Mapping with ignored fields
 TBD
