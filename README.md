@@ -1,4 +1,6 @@
 # Mapster
+
+### NOTE: THIS PACKAGE IS NOT YET FINISHED
 #### _Because life's too short to map A to B_
 **Mapster** is a simple package to help generate procedures/functions for you to map an instance of type A to type B.
 
