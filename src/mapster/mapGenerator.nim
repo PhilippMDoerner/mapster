@@ -7,11 +7,15 @@ template getIterator(a: typed): untyped =
   else:
     a.fieldPairs
     
-proc mapTo*(a: auto, b: var auto) =
-  for name1, field1 in a.getIterator():
-    for name2, field2 in b.getIterator():
-      when name1 == name2 and field1 is typeof(field2):
-        field2 = field1
+proc mapTo*(source: auto, target: var auto) =
+  when source is ref:
+    if source == nil:
+      return
+  
+  for sourceName, sourceField in source.getIterator():
+    for targetName, targetField in target.getIterator():
+      when sourceName == targetName and sourceField is typeof(targetField):
+        targetField = sourceField
 
 proc generateMapCall(variableName: string, resultTypeName: string): NimNode =
   ## generates `<variableName>.mapTo(result)
@@ -26,8 +30,19 @@ proc generateMapCall(variableName: string, resultTypeName: string): NimNode =
 
 proc isTypeWithFields(typSymbol: NimNode): bool =
   let typ = typSymbol.getImpl()
-  return typ.kind != nnkNilLit  
+  return typ.kind != nnkNilLit
 
+proc isObjectType(typSymbol: NimNode): bool =
+  let typ = typSymbol.getImpl()
+  let typeKind = typ[2].kind
+  let isRefType = typeKind == nnkRefTy
+
+  if isRefType:
+    return typ[2][0].kind == nnkObjectTy
+  else:
+    return typeKind == nnkObjectTy
+
+  
 proc getObjectParams(parametersNode: NimNode): seq[string] =
   ## Extracts the parameters of a parameter node of a proc definition
   ## which are of type object or ref object.
@@ -64,14 +79,15 @@ proc toMapProcBody(procBody: NimNode, parameterNode: NimNode, paramsToIgnore: va
   ## Parameters whose name is ignored (their name is within "paramsToIgnore")
   ## do not receive a `<parameterName>.mapTo(result)` call.
   let resultType: string = $parameterNode[0]
-
+  let resultIsObject = isObjectType(parameterNode[0])
   let params: seq[string] = getObjectParams(parameterNode)
   let mapCalls: seq[NimNode] = params
     .filterIt(it notin paramsToIgnore)
     .mapIt(generateMapCall(it, resultType))
 
   var newProcBody = newStmtList()
-  newProcBody.add(generateResultInitialization(resultType))
+  if resultIsObject:
+    newProcBody.add(generateResultInitialization(resultType))
   newProcBody.add(mapCalls)
   newProcBody.add(procBody)
   
