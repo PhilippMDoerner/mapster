@@ -1,7 +1,7 @@
 import unittest
 
 import mapster
-import std/[sugar, times, sequtils]
+import std/[times]
 
 type Dummy = object
 type DummyRef = ref object
