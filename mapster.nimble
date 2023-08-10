@@ -2,7 +2,7 @@
 
 version       = "0.1.0"
 author        = "Philipp Doerner"
-description   = "A library to quickly generate functions converting instances of one type to another"
+description   = "A library to quickly generate functions converting instances of type A to B"
 license       = "MIT"
 srcDir        = "src"
 
