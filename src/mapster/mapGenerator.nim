@@ -1,4 +1,4 @@
-import std/[strutils, macros, sequtils, sugar]
+import std/[macros, sequtils, sugar]
 
 template getIterator(a: typed): untyped =
   when a is ref:
@@ -43,7 +43,7 @@ proc getObjectParams(parametersNode: NimNode): seq[string] =
       let paramName: string = $node[0]  
       paramName    
 
-proc addResultInitialization(procNode: NimNode, resultType: string) = 
+proc generateResultInitialization(resultType: string): NimNode = 
   # # Generates `T()` to default initialize proc
   let resultInitialization: NimNode = nnkAsgn.newTree(
     newIdentNode("result"),
@@ -51,7 +51,8 @@ proc addResultInitialization(procNode: NimNode, resultType: string) =
       newIdentNode(resultType)
     )
   )
-  procNode.add(resultInitialization)
+  
+  return resultInitialization
   
 proc toMapProcBody(procBody: NimNode, parameterNode: NimNode, paramsToIgnore: varargs[string]): NimNode =
   ## Generates a procBody NimNode of the following shape:
@@ -65,14 +66,13 @@ proc toMapProcBody(procBody: NimNode, parameterNode: NimNode, paramsToIgnore: va
   let resultType: string = $parameterNode[0]
 
   let params: seq[string] = getObjectParams(parameterNode)
-  let mapCalls = params
+  let mapCalls: seq[NimNode] = params
     .filterIt(it notin paramsToIgnore)
     .mapIt(generateMapCall(it, resultType))
 
   var newProcBody = newStmtList()
-  newProcBody.addResultInitialization(resultType)
-  for call in mapCalls:
-    newProcBody.add(call)
+  newProcBody.add(generateResultInitialization(resultType))
+  newProcBody.add(mapCalls)
   newProcBody.add(procBody)
   
   return newProcBody
@@ -93,9 +93,17 @@ proc createMapProc(procDef: NimNode, paramsToIgnore: varargs[string] = @[]): Nim
   newProc[6] = newProcBody
   return newProc
 
-macro map*(procDef: typed): typed =
+macro map*(procDef: typed): untyped =
   return createMapProc(procDef)
 
-macro mapExcept*(exclude: varargs[string], procDef: typed): typed =
+macro mapExcept*(exclude: varargs[string], procDef: typed): untyped =
   let exclusions: seq[string] = exclude.mapIt($it) # For some reason exclude gets turned into NimNode, this turns that back
   return createMapProc(procDef, exclusions)
+
+# TODO: write tests
+# Auto-Assign simple parameter, no additions
+# Assign constant to field
+# Assign proc-result to field
+# Assign multiple parameter
+
+# Assign multiple parameters but ignore one

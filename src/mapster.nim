@@ -1,8 +1,6 @@
 import ./mapster/mapGenerator
 export mapGenerator
 
-import std/sugar
-
 type A = object
   name: string
   id: int
