@@ -18,6 +18,14 @@ Mapster helps by adding all assignments from instance A to B to the proc for you
 - Ref Types
 - Tuple Types
 
+## General useage
+
+Simply define a proc that takes in parameters with fields (object, ref object or tuple) and outputs a object/ref object/tuple value.
+
+Write assignments in the proc-body as needed. Mapster will add assignment statements for you from any parameter-field to a result.field where name and type match! Should you specifically assign to any of those fields yourself in the body, mapster will not override any assignment you make! 
+
+Once the proc is written, annotate it with the `{.map.}` or `{.mapExcept: <fields to not auto-map>.}` pragmas
+
 ## Examples
 ### Mapping without custom Logic
 ```nim
