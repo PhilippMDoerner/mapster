@@ -7,6 +7,17 @@ Very often A and B share a lot of fields and there is only a small set of except
 
 Mapster helps by adding all assignments from instance A to B to the proc for you where the field names and types are identical, allowing you to focus on the few fields that require logic.
 
+## Installation
+
+Install Mapster with Nimble:
+
+    $ nimble install -y mapster
+
+Add Mapster to your .nimble file:
+
+    requires "mapster"
+
+
 ## Supports
 ### Operations
 - Single Parameter mapping procs(A --> B)
@@ -31,6 +42,7 @@ Once the proc is written, annotate it with the `{.map.}` or `{.mapExcept: <field
 ### Mapping without custom Logic
 ```nim
 import std/times
+import mapster
 
 type A = object
   str: string
@@ -64,6 +76,8 @@ If you need custom logic to map values from field A to B, you can write those as
 
 Treat it as if it were a normal procedure that has invisible assignmen statements at the beginning!
 ```nim
+import mapster
+
 type A = object
   str: string
   num: int
@@ -93,6 +107,8 @@ Their fields will also be automatically mapped to the result instance!
 
 **Note**: If multiple types have fields with the same name which would map to a field on the result-type, then the value of the **last** parameter will be used.
 ```nim
+import mapster
+
 type A = object
   str: string
 
@@ -113,6 +129,8 @@ let myC: C = myMapProc(a, b)
 #### Mapping with object and non object parameters
 You can add additional non object parameters to your mapping proc: 
 ```nim
+import mapster
+
 type A = object
   str: string
   
@@ -130,6 +148,8 @@ let myB: B = myMapProc(a, 5)
 ### Mapping with ignored fields
 If you need access to an object but do not want to automatically transfer values from its fields over, you can use `mapExcept` instead of `map`:
 ```nim
+import mapster
+
 type A = object
   str: string
 
