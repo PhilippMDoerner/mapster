@@ -13,7 +13,6 @@ jobs:
         id: vars
         run: |
           echo "::set-output name=tag::${GITHUB_REF#refs/*/}"
-          echo "::set-output name=target_branch::gh-pages"
           echo "::set-output name=latest_name::latest"
 
       - name: Check out main branch
