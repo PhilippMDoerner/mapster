@@ -1,84 +1,117 @@
-import ./mapster/mapGenerator
-export mapGenerator
+import std/[macros, sequtils, sugar]
 
-type A = object
-  name: string
-  id: int
-  
-type B = object
-  name: string
-  otherName: string
-  id: int
-  otherId: string
-  ignoreMe: int
-  doubleId: int
-  
-type C = object
-  name: string
-  pk: int
-  
-type D = object
-  name: string
-  id: int
-  
-type E = object
-  a: A
-  
-  
-let a = A(name: "Potato", id: 4)
-
-# proc mapAToB(source1: A): B {.map.} =
-#     result.otherName = source1.name
-#     result.otherId = $source1.id
-#     result.doubleId = source1.id * 2
-#     result.ignoreMe = 0
-
-# proc mapBToA(source: B): A {.map.} = discard
-
-# let expectedB = B(name: "Potato", otherName: "Potato", ignoreMe: 0, doubleId: 8, otherId: "4", id: 4)
-# echo expectedB == mapAToB(a), "\n", mapAToB(a), " vs. ", expectedB, "\n"
-
-# echo mapBToA(expectedB)
-
-
-proc mapperEToA(source: E, source2: A): A {.mapExcept: "source2".} =
-  result.id = 5
-  result.name = "somevalue"
-
-let e = E(a: a)
-let expectedA = A(name: "somevalue", id: 5)
-echo mapperEToA(e, a) == expectedA, "\n", mapperEToA(e, a), " vs. ", expectedA, "\n"
-
-
-# const mapperAToC = generateMapper(A, C, @[
-#   mapFieldToField("pk", "source1.id")
-# ])
-# let expectedC = C(name: "Potato", pk: 4)
-# echo expectedC[] == mapperAToC(a)[], "\n", mapperAToC(a)[], " vs. ", expectedC[], "\n"
-
-# const mapperAToD = generateMapper(A, D, @[])
-# let expectedD = D(name: "Potato", id: 4)
-# echo expectedD[] == mapperAToD(a)[], "\n", mapperAToD(a)[], " vs. ", expectedD[], "\n"
-
-
-# type 
-#   X = object
-#     name: string
-  
-#   Y = object
-#     id: int
+template getIterator(a: typed): untyped =
+  when a is ref:
+    a[].fieldPairs
     
-#   Z = object
-#     name: string
-#     id: int
-
-# let 
-#   x = X(name: "Potato")
-#   y = Y(id: 5)
-#   expectedZ = Z(name: "Potato", id: 5)
+  else:
+    a.fieldPairs
+    
+proc mapTo*(source: auto, target: var auto) =
+  when source is ref:
+    if source == nil:
+      return
   
-# const mapperXYToZ = generateMapper(X, Y, Z, @[
-#   mapFieldToField("id", "source2.id")
-# ])
-# echo expectedZ == mapperXYToZ(x, y), "\n", mapperXYToZ(x, y), " vs. ", expectedZ, "\n"
- 
+  for sourceName, sourceField in source.getIterator():
+    for targetName, targetField in target.getIterator():
+      when sourceName == targetName and sourceField is typeof(targetField):
+        targetField = sourceField
+
+proc generateMapCall(variableName: string, resultTypeName: string): NimNode =
+  ## generates `<variableName>.mapTo(result)
+  
+  return nnkCall.newTree(
+    nnkDotExpr.newTree(
+      newIdentNode(variableName),
+      newIdentNode("mapTo")
+    ),
+    newIdentNode("result")
+  )
+
+proc isTypeWithFields(typSymbol: NimNode): bool =
+  let typ = typSymbol.getImpl()
+  return typ.kind != nnkNilLit
+
+proc isObjectType(typSymbol: NimNode): bool =
+  let typ = typSymbol.getImpl()
+  let typeKind = typ[2].kind
+  let isRefType = typeKind == nnkRefTy
+
+  if isRefType:
+    return typ[2][0].kind == nnkObjectTy
+  else:
+    return typeKind == nnkObjectTy
+
+  
+proc getObjectParams(parametersNode: NimNode): seq[string] =
+  ## Extracts the parameters of a parameter node of a proc definition
+  ## which are of type object or ref object.
+  ## Returns the list of parameter names.
+  let lastParameterIndex = parametersNode.len - 1
+  result = collect(newSeq):
+    for node in parametersNode[1..lastParameterIndex]:
+      let typeNode: NimNode = node[1]
+      let isParamTypeWithFields = isTypeWithFields(typeNode)
+      if not isParamTypeWithFields:
+        continue
+      
+      let paramName: string = $node[0]  
+      paramName    
+
+proc generateResultInitialization(resultType: string): NimNode = 
+  # # Generates `T()` to default initialize proc
+  let resultInitialization: NimNode = nnkAsgn.newTree(
+    newIdentNode("result"),
+    nnkCall.newTree(
+      newIdentNode(resultType)
+    )
+  )
+  
+  return resultInitialization
+  
+proc toMapProcBody(procBody: NimNode, parameterNode: NimNode, paramsToIgnore: varargs[string]): NimNode =
+  ## Generates a procBody NimNode of the following shape:
+  ##   result = A()
+  ##   (For each object type parameter):
+  ##      <parameterName>.mapTo(result)
+  ##   (For end)
+  ##   <oldProcBody>
+  ## Parameters whose name is ignored (their name is within "paramsToIgnore")
+  ## do not receive a `<parameterName>.mapTo(result)` call.
+  let resultType: string = $parameterNode[0]
+  let resultIsObject = isObjectType(parameterNode[0])
+  let params: seq[string] = getObjectParams(parameterNode)
+  let mapCalls: seq[NimNode] = params
+    .filterIt(it notin paramsToIgnore)
+    .mapIt(generateMapCall(it, resultType))
+
+  var newProcBody = newStmtList()
+  if resultIsObject:
+    newProcBody.add(generateResultInitialization(resultType))
+  newProcBody.add(mapCalls)
+  newProcBody.add(procBody)
+  
+  return newProcBody
+
+proc createMapProc(procDef: NimNode, paramsToIgnore: varargs[string] = @[]): NimNode = 
+  ## Takes in a proc definition `procDef` which includes a body with instructions
+  ## and generates a new mapping proc based on it. 
+  ## The mapping proc is identical to the original proc def except for the body.
+  ## The body gets instructions added to it to map fields from parameters to
+  ## the result instance.
+  ## parameters whose name is in `paramsToIgnore` will not get such instructions added.
+  let newProc: NimNode = procDef.copy
+
+  let parameterNode: NimNode = newProc[3]
+  let oldProcBody: NimNode = newProc[6]
+  let newProcBody = oldProcBody.toMapProcBody(parameterNode, paramsToIgnore)
+  
+  newProc[6] = newProcBody
+  return newProc
+
+macro map*(procDef: typed): untyped =
+  return createMapProc(procDef)
+
+macro mapExcept*(exclude: varargs[string], procDef: typed): untyped =
+  let exclusions: seq[string] = exclude.mapIt($it) # For some reason exclude gets turned into NimNode, this turns that back
+  return createMapProc(procDef, exclusions)
