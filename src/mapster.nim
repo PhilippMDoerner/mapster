@@ -14,7 +14,7 @@ proc mapTo*(source: auto, target: var auto) =
   
   for sourceName, sourceField in source.getIterator():
     for targetName, targetField in target.getIterator():
-      when sourceName == targetName and sourceField is typeof(targetField):
+      when sourceName.eqIdent(targetName) and sourceField is typeof(targetField):
         targetField = sourceField
 
 proc generateMapCall(variableName: string, resultTypeName: string): NimNode =

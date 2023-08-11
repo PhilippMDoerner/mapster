@@ -913,3 +913,41 @@ suite "Testing map - Assignment special cases":
     let expected = B(str: "SomeStringParam")
     
     check result == expected
+
+  test """
+    GIVEN an object type A and B that share fields that only match due to case insensitivity and underscore insensitivity
+    WHEN an instance of A is mapped to an instance of B
+    THEN it should create an instance of B with all fields having the value of their name counterparts from A
+  """:
+    # Given
+    type A = object
+      str: string
+      num: int
+      floatNum: float
+
+    type B = object
+      s_t_r: string
+      nUM: int
+      float_num: float
+
+    proc map(x: A): B {.map.} =
+      result.nUM = 20
+
+    let a = A(
+      str: "str",
+      num: 5,
+      floatNum: 2.5
+    )
+    
+    # When
+    let result: B = map(a)
+    
+    # Then
+    let expected = B(
+      s_t_r: "str",
+      nUM: 20,
+      float_num: 2.5
+    )
+    
+    check result == expected
+      
