@@ -29,6 +29,10 @@ proc generateMapCall(variableName: string, resultTypeName: string): NimNode =
   )
 
 proc isTypeWithFields(typSymbol: NimNode): bool =
+  let isBracketType = typSymbol.kind == nnkBracketExpr # Checks for seq types, those don't have fields
+  if isBracketType:
+    return false
+  
   let typ = typSymbol.getImpl()
   return typ.kind != nnkNilLit
 

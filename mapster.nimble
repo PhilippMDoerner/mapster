@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.2"
+version       = "0.1.3"
 author        = "Philipp Doerner"
 description   = "A library to quickly generate functions converting instances of type A to B"
 license       = "MIT"
