@@ -988,3 +988,77 @@ suite "Testing map - Assignment special cases":
     
     check result == expected
       
+
+
+  test """
+    GIVEN an object variant A and an object type B that share some fields on the instance 
+    WHEN an instance of A is mapped to an instance of B
+    THEN it should create an instance of B with all fields having the value of their name counterparts from A
+  """:
+    # Given
+    type Kind = enum
+      str, num
+    type A = object
+      case kind: Kind
+      of str: str: string
+      of num: num: int
+
+    type B = object
+      kind: Kind
+      str: string
+      num: int
+
+    proc map(x: A): B {.map.} = discard
+    
+    let a = A(
+      kind: str,
+      str: "str"
+    )
+    
+    # When
+    let result: B = map(a)
+    
+    # Then
+    let expected = B(kind: str, str: "str")
+    
+    check result == expected
+    
+    
+  test """
+    GIVEN an object variant type A and an object type B that share some fields on the instance 
+    WHEN 2 instances of A of different variant kinds are mapped to an instance of B
+    THEN it should create an instance of B with all fields having the value of their name counterparts from A
+  """:
+    # Given
+    type Kind = enum
+      str, num
+    type A = object
+      case kind: Kind
+      of str: str: string
+      of num: num: int
+
+    type B = object
+      kind: Kind
+      str: string
+      num: int
+
+    proc map(x: A, y: A): B {.map.} = discard
+    
+    let a1 = A(
+      kind: str,
+      str: "str"
+    )
+    
+    let a2 = A(
+      kind: num,
+      num: 5
+    )
+    
+    # When
+    let result: B = map(a1, a2)
+    
+    # Then
+    let expected = B(kind: num, str: "str", num: 5)
+    
+    check result == expected
+
