@@ -4,7 +4,7 @@ import ./utils
 proc mapTo*(source: auto, target: var auto) =
   when source is ref:
     if source == nil:
-      return
+      raise newException(ValueError, "Tried to map 'nil' to object variant")
   
   for sourceName, sourceField in source.getIterator():
     for targetName, targetField in target.getIterator():
