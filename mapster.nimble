@@ -10,3 +10,6 @@ srcDir        = "src"
 # Dependencies
 
 requires "nim >= 1.6.0"
+
+task debugTest, "Executes the tests and echo'ing the generated procs for debug purposes":
+  exec "nimble test --define:mapsterDebug"

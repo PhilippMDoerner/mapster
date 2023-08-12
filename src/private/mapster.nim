@@ -116,6 +116,7 @@ proc createMapProc(procDef: NimNode, paramsToIgnore: varargs[string] = @[]): Nim
   let newProcBody = oldProcBody.toMapProcBody(parameterNode, paramsToIgnore)
   
   newProc.body = newProcBody
+  debugProcNode newProc
   return newProc
 
 macro map*(procDef: typed): untyped =

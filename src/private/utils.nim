@@ -65,3 +65,9 @@ proc getResultTypeSymbol*(parametersNode: NimNode): NimNode =
   expectKind(resultTypeSymbol, nnkSym)
   
   return resultTypeSymbol
+    
+template debugProcNode*(node: NimNode) =
+  expectKind(node, nnkProcDef)
+  
+  when defined(mapsterDebug):
+    echo "Generated Procedure: \n",node.repr
