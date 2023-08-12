@@ -78,25 +78,23 @@ proc isTypeWithFields(typSymbol: NimNode): bool =
   
   return false
 
-proc generateResultInitialization(resultType: string): NimNode = 
-  # # Generates `result = T()` to default initialize proc
-  let resultInitialization: NimNode = nnkAsgn.newTree(
-    newIdentNode("result"),
-    nnkCall.newTree(
-      newIdentNode(resultType)
+proc generateResultInitialization(resultType: string, discriminatorFieldName: string, discriminatorParamName: auto): NimNode = 
+  ## Generates `result = T(<discriminatorFieldName>: <discriminatorParamName>)`
+  ## to default initialize proc
+  let defaultVariant: NimNode = nnkObjConstr.newTree(
+    newIdentNode(resultType),
+    nnkExprColonExpr.newTree(
+      newIdentNode(discriminatorFieldName),
+      newIdentNode(discriminatorParamName)
     )
   )
   
-  return resultInitialization
-
-proc generateDiscriminatorAssignment(discriminatorFieldName: string, kindParamName: string): NimNode =
-  return newAssignment(
-    newDotExpr(
-      newIdentNode("result"),
-      newIdentNode(discriminatorFieldName)
-    ),
-    newIdentNode(kindParamName)
+  let resultInitialization: NimNode = newAssignment(
+    newIdentNode("result"),
+    defaultVariant
   )
+  
+  return resultInitialization
   
 proc toMapProcBody(procBody: NimNode, paramNode: NimNode, kindParamName: string): NimNode =
   ## Generates a procBody NimNode of the following shape:
@@ -124,8 +122,11 @@ proc toMapProcBody(procBody: NimNode, paramNode: NimNode, kindParamName: string)
     .mapIt(generateMapCall(it, resultTypeStr, discriminatorFieldName))
 
   var newProcBody = newStmtList()
-  newProcBody.add(generateResultInitialization(resultTypeStr))
-  newProcBody.add(generateDiscriminatorAssignment(discriminatorFieldName, kindParamName))
+  newProcBody.add(generateResultInitialization(
+    resultTypeStr, 
+    discriminatorFieldName, 
+    kindParamName
+  ))
   newProcBody.add(mapCalls)
   newProcBody.add(procBody)
   
