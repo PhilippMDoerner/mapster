@@ -1,4 +1,4 @@
-import std/macros
+import std/[strformat, macros, options]
 
 template getIterator*(a: typed): untyped =
   ## Provides a fieldPairs iterator for both ref-types and value-types
@@ -65,7 +65,34 @@ proc getResultTypeSymbol*(parametersNode: NimNode): NimNode =
   expectKind(resultTypeSymbol, nnkSym)
   
   return resultTypeSymbol
-    
+
+proc getParameterOfName*(parameters: seq[NimNode], parameterName: string): Option[NimNode] =
+  ## Takes in a seq of parameters with the shape:
+  ##  IdentDefs
+  ##    Sym "<paramterNameAsString>"
+  ##    Sym "<parameterTypeAsString>"
+  ##    Empty
+  ## Returns the parameter with a matching name.
+  for param in parameters:
+    let paramName: string = $param[0]
+    if paramName == parameterName:
+      return some param
+  
+  none(NimNode)
+  
+proc getParameterOfName*(parametersNode: NimNode, parameterName: string): Option[NimNode] =
+  ## Takes in a Node containing all parameters and the result-type of a proc definition.
+  ## Returns a list of only the parameters. 
+  ## Each parameter is an IdentDefs-Node in the shape of:
+  ## IdentDefs
+  ##  Sym "<paramterNameAsString>"
+  ##  Sym "<parameterTypeAsString>"
+  ##  Empty
+  expectKind(parametersNode, nnkFormalParams)
+  return parametersNode
+    .getParameters()
+    .getParameterOfName(parameterName)
+
 template debugProcNode*(node: NimNode) =
   expectKind(node, nnkProcDef)
   
