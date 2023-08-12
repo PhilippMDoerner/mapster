@@ -1,13 +1,6 @@
 import std/[macros, sequtils, sugar]
 import ./utils
 
-template getIterator(a: typed): untyped =
-  when a is ref:
-    a[].fieldPairs
-    
-  else:
-    a.fieldPairs
-    
 proc mapTo*(source: auto, target: var auto) =
   when source is ref:
     if source == nil:

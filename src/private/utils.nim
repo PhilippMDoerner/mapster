@@ -1,5 +1,14 @@
 import std/macros
 
+template getIterator*(a: typed): untyped =
+  ## Provides a fieldPairs iterator for both ref-types and value-types
+  when a is ref:
+    a[].fieldPairs
+    
+  else:
+    a.fieldPairs
+    
+
 proc getParameters*(parametersNode: NimNode): seq[NimNode] =
   ## Takes in a Node containing all parameters and the result-type of a proc definition.
   ## Returns a list of only the parameters. 
