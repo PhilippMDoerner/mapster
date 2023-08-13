@@ -66,6 +66,106 @@ proc getParameters*(parametersNode: NimNode): seq[NimNode] =
     expectKind(node, nnkIdentDefs)
     result.add node
 
+proc getFieldName(assignment: NimNode): string =
+  assertKind(assignment, nnkAsgn)
+  
+  let fieldSym: NimNode = assignment[0][1]
+  assertKind(fieldSym, nnkSym)
+  
+  return $fieldSym
+
+proc getFieldsOfType*(sym: NimNode): HashSet[string] =
+  assertKind(sym, nnkSym)
+  let typeDef: NimNode = sym.getImpl()
+  assertKind(typeDef, nnkTypeDef)
+  
+  let isRefType = typeDef[2].kind == nnkRefTy
+  let typeNode = if isRefType:
+      typedef[2][0]
+    else:
+      typedef[2]
+  assertKind(typeNode, @[nnkObjectTy, nnkTupleTy])
+  
+  var fieldsNode: NimNode
+  case typeNode.kind:
+  of nnkTupleTy:  
+    fieldsNode = typeNode
+  of nnkObjectTy: 
+    fieldsNode = typeNode[2]
+  else: 
+    error("Failed to get fieldsNode for kind " & $(typeNode.kind))
+
+  assertKind(fieldsNode, @[nnkRecList, nnkTupleTy])
+  for field in fieldsNode:
+    case field.kind:
+    of nnkIdentDefs:
+      let fieldName = $field[0]
+      result.incl(fieldName)
+      
+    of nnkRecCase: # isNodeOfObjectVariantSection
+      for variantField in field:
+        case variantField.kind:
+        of nnkIdentDefs: # isKindField
+          let fieldName = $variantField[0]
+          result.incl(fieldName)
+          
+        of nnkOfBranch:  # is of-branch section of object variant
+          let branchNode = variantField
+          for node in branchNode:
+            case node.kind:
+            of nnkIdent: # isNodeWithOf-Value of Branch
+              continue
+            
+            of nnkIdentDefs:
+              let fieldName  = $node[0]
+              result.incl(fieldName)
+              
+            else:
+              error("Got field of unexpected kind in of branch of object variant fields: " & node.treeRepr)
+    
+        else:
+          error("Got field of unexpected kind in object variant section: " & variantField.treeRepr)
+    
+    else:
+      error("Got field of unexpected kind: " & field.treeRepr)
+
+proc getAssignedFields*(procBody: NimNode): seq[string] =
+  let hasAssignments = procBody.kind in [nnkAsgn, nnkStmtList]
+  case procBody.kind:
+  of nnkAsgn:
+    let assignment = procBody
+    return @[assignment.getFieldName()]
+  
+  of nnkStmtList:   
+    let assignments = procBody 
+    return assignments.mapIt(it.getFieldName())
+  
+  else:
+    return @[] 
+
+proc getAutoAssignableFields*(paramNode: NimNode, paramsToIgnore: seq[string] = @[]): HashSet[string] =
+  assertKind(paramNode, nnkFormalParams)
+  
+  let params: seq[NimNode] = paramNode.getParameters()
+  for param in params:
+    assertKind(param, nnkIdentDefs)
+    let paramName = $param[0]
+    if paramName in paramsToIgnore:
+      continue
+    
+    let typeSym: NimNode = param[1]
+    if not isTypeWithFields(typeSym):
+      continue
+    
+    assertKind(typeSym, nnkSym)
+    let typeFields: HashSet[string] = typeSym.getFieldsOfType()
+    result.incl(typeFields)
+    
+proc getAllObjectVariantFields*(variantType: typedesc[auto], kindType: typedesc[enum]): HashSet[string] =
+  result = initHashSet[string]()
+  for kind in kindType:
+    for field, val in variantType(kind: kind).fieldPairs:
+      result.incl field
 
 proc getResultType*(parametersNode: NimNode): NimNode =
   ## Takes in a Node containing all parameters and the result-type of a proc definition.

@@ -1,4 +1,4 @@
-import std/[macros, sequtils, sugar]
+import std/[macros, sequtils, sets, strformat]
 import ./utils
 
 proc mapTo*(source: auto, target: var auto) =
@@ -22,31 +22,28 @@ proc generateMapCall(variableName: string, resultTypeName: string): NimNode =
     newIdentNode("result")
   )
 
-proc isTypeWithFields(typSymbol: NimNode): bool =
-  let isSymbol = typSymbol.kind == nnkSym
-  if not isSymbol:
-    return false
+proc validateProcDef(procDef: NimNode) =
+  ## Checks that all fields on the result-type has values being assigned to
+  assertKind(procDef, nnkProcDef)
+  let procBody = procDef.body
+  let paramsNode = procDef.params
   
-  let typeDef = typSymbol.getImpl()
-  let isSomethingWeird = typeDef.kind == nnkNilLit
-  if isSomethingWeird:
-    return false
+  let manuallyAssignedFields: seq[string] = procBody.getAssignedFields()
+  let autoAssignableFields: HashSet[string] = paramsNode.getAutoAssignableFields()
   
-  assertKind(typeDef, nnkTypeDef)
-
-  let typeKind = typeDef[2].kind
+  let resultTypeSym = paramsNode[0]
+  assertKind(resultTypeSym, @[nnkSym])
+  let targetFields: HashSet[string] = resultTypeSym.getFieldsOfType()
   
-  let isObjectOrTuple = typeKind in [nnkObjectTy, nnkTupleTy]
-  if isObjectOrTuple:
-    return true
-  
-  let isRefType = typeKind == nnkRefTy
-  if isRefType:
-    let refTypeKind = typeDef[2][0].kind
-    let isRefObjectOrRefTuple = refTypeKind in [nnkObjectTy, nnkTupleTy]
-    return isRefObjectOrRefTuple
-  
-  return false
+  for targetField in targetFields:
+    let isGetingAssignedTo = (targetField in autoAssignableFields) or (targetField in manuallyAssignedFields)
+    if not isGetingAssignedTo:
+      let resultTypeStr = $paramsNode.getResultType()[0]
+      error(fmt"""
+        '{resultTypeStr}.{targetField}' is never assigned a value! 
+        There is no field on a parameter that could map to '{targetField}'
+        nor is there a manual assignment in the proc-body to this field!
+      """)
 
 proc isObjectType(typSymbol: NimNode): bool =
   assertKind(typSymbol, nnkSym)
@@ -131,6 +128,8 @@ proc createMapProc(procDef: NimNode, paramsToIgnore: varargs[string] = @[]): Nim
 
 macro map*(procDef: typed): untyped =
   expectKind(procDef, nnkProcDef, "Annotated line is not a proc definition!\nYou may only use map as a pragma to annotate a proc definition!")
+  when defined(mapsterValidate):
+    validateProcDef(procDef)
   return createMapProc(procDef)
 
 macro mapExcept*(exclude: varargs[string], procDef: typed): untyped =
