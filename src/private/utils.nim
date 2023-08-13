@@ -1,4 +1,16 @@
-import std/[strformat, macros, options]
+import std/[strformat, macros, options, terminal]
+
+proc assertKind*(node: NimNode, kind: NimNodeKind, msg: string = "") =
+  let boldCode = ansiStyleCode(styleBright)
+  let msg = if msg == "": fmt"{boldCode} Expected a node of kind '{kind}', got '{node.kind}'" else: msg
+  doAssert node.kind == kind, msg
+
+proc expectKind*(node: NimNode, kind: NimNodeKind, msg: string) =
+  if node.kind != kind:
+    let boldCode = ansiStyleCode(styleBright)
+    let msgEnd = fmt"Caused by: Expected a node of kind '{kind}', got '{node.kind}'"
+    let errorMsg = boldCode & msg & "\n" & msgEnd
+    error(errorMsg)
 
 template getIterator*(a: typed): untyped =
   ## Provides a fieldPairs iterator for both ref-types and value-types

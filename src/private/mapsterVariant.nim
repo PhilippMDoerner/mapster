@@ -31,10 +31,20 @@ proc getDiscriminatorField(typeDef: NimNode): NimNode =
   ## Extracts the discriminator-field off of an object-variant typedef
   ## Throws a compile-time errror if there is no such field.
   ## A discriminator field is recognizeable as being the first IdentDef Node in a RecCase Node.
-  typeDef.expectKind(nnkTypeDef)
+  typeDef.assertKind(nnkTypeDef)
   
-  let objectTy = typeDef[2]
-  let fieldList = objectTy[2]
+  let objectTy: NimNode = typeDef[2]
+  let isRefVariant = objectTy.kind == nnkRefTy
+  let fieldList: NimNode = if isRefVariant:
+      let unreffedObjectTy: NimNode = objectTy[0]
+      assertKind(unreffedObjectTy, nnkObjectTy)
+      unreffedObjectTy[2]
+    else:
+      assertKind(objectTy, nnkObjectTy)
+      objectTy[2]
+      
+  assertKind(fieldList, nnkRecList)
+  
   for field in fieldList:
     let isDiscriminatorSection = field.kind == nnkRecCase
     if not isDiscriminatorSection:
@@ -56,13 +66,13 @@ proc areSameType(identNode1, identNode2: NimNode): bool =
   ##   Sym "<type>"
   ##   Empty
   ## Returns true if the types of the IdentDefs are equal
-  expectKind(identNode1, nnkIdentDefs)
-  expectKind(identNode2, nnkIdentDefs)
+  assertKind(identNode1, nnkIdentDefs)
+  assertKind(identNode2, nnkIdentDefs)
   identNode1[1] == identNode2[1]
 
 proc isTypeWithFields(typSymbol: NimNode): bool =
   let typeDef = typSymbol.getImpl()
-  expectKind(typeDef, nnkTypeDef)
+  assertKind(typeDef, nnkTypeDef)
 
   let typeKind = typeDef[2].kind
   
@@ -105,7 +115,7 @@ proc toMapProcBody(procBody: NimNode, paramNode: NimNode, kindParamName: string)
   ##   <oldProcBody>
   ## Parameters whose name is ignored (their name is within "paramsToIgnore")
   ## do not receive a `<parameterName>.mapTo(result)` call.
-  expectKind(paramNode, nnkFormalParams)
+  assertKind(paramNode, nnkFormalParams)
   
   let params: seq[NimNode] = paramNode.getParameters()
     
@@ -134,7 +144,7 @@ proc toMapProcBody(procBody: NimNode, paramNode: NimNode, kindParamName: string)
 
 
 proc createMapProc(procDef: NimNode, kindParamName: string): NimNode = 
-  expectKind(procDef, nnkProcDef)
+  assertKind(procDef, nnkProcDef)
   let newProc: NimNode = procDef.copy
 
   let parameterNode: NimNode = newProc.params
@@ -150,7 +160,7 @@ proc validateProcDef(procDef: NimNode, kindParamName: string) =
   ## - Has parameter with the name `kindParamName`
   ## - Has an object variant as a result-type
   ## - The object variant has a discriminator field with the same type as the parameter called `kindParamName`
-  expectKind(procDef, nnkProcDef) 
+  assertKind(procDef, nnkProcDef) 
   
   let parameterNode = procDef.params
   let resultType: NimNode = parameterNode.getResultType()
@@ -170,5 +180,6 @@ proc validateProcDef(procDef: NimNode, kindParamName: string) =
     """)
 
 macro mapVariant*(kindParamName: string, procDef: typed): untyped =
+  expectKind(procDef, nnkProcDef, "Annotated line is not a proc definition!\nYou may only use mapVariant as a pragma to annotate a proc definition!")
   validateProcDef(procDef, $kindParamName)  
   return createMapProc(procDef, $kindParamName)

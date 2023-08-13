@@ -32,7 +32,7 @@ proc isTypeWithFields(typSymbol: NimNode): bool =
   if isSomethingWeird:
     return false
   
-  expectKind(typeDef, nnkTypeDef)
+  assertKind(typeDef, nnkTypeDef)
 
   let typeKind = typeDef[2].kind
   
@@ -49,7 +49,11 @@ proc isTypeWithFields(typSymbol: NimNode): bool =
   return false
 
 proc isObjectType(typSymbol: NimNode): bool =
+  assertKind(typSymbol, nnkSym)
+
   let typ = typSymbol.getImpl()
+  assertKind(typ, nnkTypeDef)
+  
   let typeKind = typ[2].kind
   let isValueObjectType = typeKind == nnkObjectTy
   if isValueObjectType:
@@ -64,7 +68,7 @@ proc isObjectType(typSymbol: NimNode): bool =
   
 proc generateResultInitialization(resultType: string): NimNode = 
   # # Generates `T()` to default initialize proc
-  let resultInitialization: NimNode = nnkAsgn.newTree(
+  let resultInitialization: NimNode = newAssignment(
     newIdentNode("result"),
     nnkCall.newTree(
       newIdentNode(resultType)
@@ -82,7 +86,10 @@ proc toMapProcBody(procBody: NimNode, parameterNode: NimNode, paramsToIgnore: va
   ##   <oldProcBody>
   ## Parameters whose name is ignored (their name is within "paramsToIgnore")
   ## do not receive a `<parameterName>.mapTo(result)` call.
+  assertKind(parameterNode, nnkFormalParams)
+  
   let resultType: NimNode = parameterNode.getResultType()
+  assertKind(resultType, nnkTypeDef)
   let resultTypeName: string = $resultType[0]
   let resultIsObject: bool = parameterNode.getResultTypeSymbol().isObjectType()
   
@@ -94,7 +101,7 @@ proc toMapProcBody(procBody: NimNode, parameterNode: NimNode, paramsToIgnore: va
     .filterIt(it notin paramsToIgnore)
     .mapIt(generateMapCall(it, resultTypeName))
 
-  var newProcBody = newStmtList()
+  var newProcBody: NimNode = newStmtList()
   if resultIsObject:
     newProcBody.add(generateResultInitialization(resultTypeName))
   newProcBody.add(mapCalls)
@@ -109,17 +116,21 @@ proc createMapProc(procDef: NimNode, paramsToIgnore: varargs[string] = @[]): Nim
   ## The body gets instructions added to it to map fields from parameters to
   ## the result instance.
   ## parameters whose name is in `paramsToIgnore` will not get such instructions added.
+  assertKind(procDef, nnkProcDef)
   let newProc: NimNode = procDef.copy
 
   let parameterNode: NimNode = newProc.params
+  assertKind(parameterNode, nnkFormalParams)
+
   let oldProcBody: NimNode = newProc.body
-  let newProcBody = oldProcBody.toMapProcBody(parameterNode, paramsToIgnore)
+  let newProcBody: NimNode = oldProcBody.toMapProcBody(parameterNode, paramsToIgnore)
   
   newProc.body = newProcBody
   debugProcNode newProc
   return newProc
 
 macro map*(procDef: typed): untyped =
+  expectKind(procDef, nnkProcDef, "Annotated line is not a proc definition!\nYou may only use map as a pragma to annotate a proc definition!")
   return createMapProc(procDef)
 
 macro mapExcept*(exclude: varargs[string], procDef: typed): untyped =
