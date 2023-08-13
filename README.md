@@ -27,16 +27,21 @@ Add Mapster to your .nimble file:
 
 ### Types
 - Object types
+- Object Variant Types (only with `mapVariant`)
 - Ref Types
+- Ref Object Variant Types (only with `mapVariant`)
 - Tuple Types
 
 ## General useage
 
-Simply define a proc that takes in parameters with fields (object, ref object or tuple) and outputs a object/ref object/tuple value.
+Simply define a proc that takes in parameters with fields and outputs a object/ref object/tuple value.
 
 Write assignments in the proc-body as needed. Mapster will add assignment statements for you from any parameter-field to a result.field where name and type match! Should you specifically assign to any of those fields yourself in the body, mapster will not override any assignment you make! 
 
-Once the proc is written, annotate it with the `{.map.}` or `{.mapExcept: <fields to not auto-map>.}` pragmas
+Once the proc is written, annotate it with the `{.map.}` or `{.mapExcept: <fields to not auto-map>.}` pragmas.
+
+**Note:** Mapster **does not check** that all fields are getting values assigned!
+If your result-type contains fields that remain default-initialized after the mapping, mapster will not raise an Exception.
 
 ## Examples
 ### Mapping without custom Logic
@@ -59,7 +64,7 @@ type B = object
   boolean: bool
 
 let a = A(
-  str: "str,
+  str: "str",
   num: 5,
   floatNum: 2.5,
   dateTime: now(),
@@ -69,6 +74,7 @@ let a = A(
 proc myMapProc(x: A): B {.map.} = discard
 
 let myB: B = myMapProc(a)
+echo myB # (str: "str", num: 5, floatNum: 2.5, dateTime: 2023-08-13T19:00:49+02:00, boolean: true)
 ```
 ### Mapping with custom Logic
 Mapster does not apply any limitations to your mapping proc!
@@ -98,6 +104,39 @@ proc myMapProc(x: A): B {.map.} =
   result.constNum = 20
 
 let myB: B = myMapProc(a)
+echo myB # (str: "str", num: 5, doubleNum: 10, constNum: 20)
+```
+
+#### Mapping to object variants
+Mapping any input to object variants is requires telling mapster *which* possible variant of an object variant you want to instantiate. Mapster can not infer this.
+
+As such, you should annotate your proc with `mapVariant` in those scenarios, provide a parameter with the desired kind and the name of the variable that you provide:
+
+```nim
+import mapster
+
+type A = object
+  str: string
+  num: int
+
+type Kind = enum
+  ka, kb
+
+type B = object
+  case kind: Kind
+  of ka: str: string
+  of kb: num: int
+
+
+let a = A(str: "str", num: 5)
+
+proc mapToB(x: A, bKind: Kind): B {.mapVariant: "bKind".} = discard
+
+let myBa: B = mapToB(a, Kind.ka)
+echo myBa # (kind: ka, str: "str")
+
+let myBb: B = mapToB(a, Kind.kb)
+echo myBb # (kind: kb, num: 5)
 ```
 
 ### Mapping with multiple parameters
@@ -125,6 +164,7 @@ let b = B(num: 5)
 proc myMapProc(a: A, b: B): C {.map.} = discard
 
 let myC: C = myMapProc(a, b)
+echo myC # (str: "str", num: 5)
 ```
 #### Mapping with object and non object parameters
 You can add additional non object parameters to your mapping proc: 
@@ -143,6 +183,7 @@ let a = A(str: "str")
 proc myMapProc(a: A, b: int): B {.map.} = discard
 
 let myB: B = myMapProc(a, 5)
+echo myB # (str: "str", num: 0)
 ```
 
 ### Mapping with ignored fields
