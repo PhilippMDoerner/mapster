@@ -14,9 +14,9 @@ type Dummy = object
 
 type DummyRef = ref object
 
-suite "Testing map - Assignment between tuple, object and ref object":
+suite "Testing map - Assignment between tuple, object and ref object (3x3 test matrix)":
   test """
-    GIVEN an object type A and B that share all fields 
+    1. GIVEN an object type A and B that share all fields 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
@@ -81,7 +81,7 @@ suite "Testing map - Assignment between tuple, object and ref object":
 
 
   test """
-    GIVEN a ref object type A and an object type B that share all fields 
+    2. GIVEN a ref object type A and an object type B that share all fields 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
@@ -146,7 +146,7 @@ suite "Testing map - Assignment between tuple, object and ref object":
 
 
   test """
-    GIVEN ref object types A and B that share all fields 
+    3. GIVEN ref object types A and B that share all fields 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
@@ -210,7 +210,7 @@ suite "Testing map - Assignment between tuple, object and ref object":
   
   
   test """
-    GIVEN object type A and ref object type B that share all fields 
+    4. GIVEN object type A and ref object type B that share all fields 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
@@ -275,7 +275,7 @@ suite "Testing map - Assignment between tuple, object and ref object":
 
 
   test """
-    GIVEN tuple type A and object type B that share all fields 
+    5. GIVEN tuple type A and object type B that share all fields 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
@@ -340,7 +340,7 @@ suite "Testing map - Assignment between tuple, object and ref object":
 
 
   test """
-    GIVEN tuple type A and ref object type B that share all fields 
+    6. GIVEN tuple type A and ref object type B that share all fields 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
@@ -405,7 +405,7 @@ suite "Testing map - Assignment between tuple, object and ref object":
 
 
   test """
-    GIVEN object type A and tuple type B that share all fields 
+    7. GIVEN object type A and tuple type B that share all fields 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
@@ -470,7 +470,7 @@ suite "Testing map - Assignment between tuple, object and ref object":
 
 
   test """
-    GIVEN ref object A and tuple type B that share all fields 
+    8. GIVEN ref object A and tuple type B that share all fields 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
@@ -532,8 +532,10 @@ suite "Testing map - Assignment between tuple, object and ref object":
       
       check result == expected
 
+
+
   test """
-    GIVEN tuple types A and B that share all fields 
+    9. GIVEN tuple types A and B that share all fields 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
@@ -594,6 +596,7 @@ suite "Testing map - Assignment between tuple, object and ref object":
       )
       
       check result == expected
+      
       
       
 suite "Testing map - Assignment special cases":
