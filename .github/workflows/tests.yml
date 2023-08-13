@@ -5,10 +5,16 @@ on:
   push:
     branches:
       - develop
+      - main
   pull_request:
     branches:
       - develop
+      - main
       
+permissions:
+  contents: write
+  id-token: write
+  
 # Execute a job called "Tests" once for each combination of defined nim-versions and os's.
 # It will execute only on ubuntu-latest (but you can expand as displayed).
 # For execution it will install the package according to the nimble file
@@ -17,23 +23,26 @@ jobs:
   Tests:
     strategy:
       matrix:
-        nim-version: ['1.6.2', '2.0.0'] # All nim versions you may want to test for
+        nimversion: 
+          - binary:2.0.0
+          - binary:1.6.10
         os:
           - ubuntu-latest
           - windows-latest
           - macOS-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
 
-    runs-on: ${{ matrix.os }}
-    name: Nim ${{ matrix.nim-version }} - ${{ matrix.os }}
+    name: Nim ${{ matrix.nimversion }} - ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v1
-      - uses: jiro4989/setup-nim-action@v1
+      - uses: iffy/install-nim@v4
         with:
-          nim-version: ${{ matrix.nim-version }}
-
-      - run: nimble install -Y
-
-      - name: Run your tests
-        run: nimble test
+          version: ${{ matrix.nimversion }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Test
+        run: |
+          nimble install -y
+          nimble test
