@@ -12,6 +12,32 @@ proc expectKind*(node: NimNode, kind: NimNodeKind, msg: string) =
     let errorMsg = boldCode & msg & "\n" & msgEnd
     error(errorMsg)
 
+proc isTypeWithFields*(typSymbol: NimNode): bool =
+  let isSymbol = typSymbol.kind == nnkSym
+  if not isSymbol:
+    return false
+  
+  let typeDef = typSymbol.getImpl()
+  let isSomethingWeird = typeDef.kind == nnkNilLit
+  if isSomethingWeird:
+    return false
+  
+  assertKind(typeDef, nnkTypeDef)
+
+  let typeKind = typeDef[2].kind
+  
+  let isObjectOrTuple = typeKind in [nnkObjectTy, nnkTupleTy]
+  if isObjectOrTuple:
+    return true
+  
+  let isRefType = typeKind == nnkRefTy
+  if isRefType:
+    let refTypeKind = typeDef[2][0].kind
+    let isRefObjectOrRefTuple = refTypeKind in [nnkObjectTy, nnkTupleTy]
+    return isRefObjectOrRefTuple
+  
+  return false
+
 template getIterator*(a: typed): untyped =
   ## Provides a fieldPairs iterator for both ref-types and value-types
   when a is ref:

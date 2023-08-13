@@ -1,4 +1,4 @@
-import std/[macros, sequtils, sugar, sets, strformat, options]
+import std/[macros, sequtils, sets, strformat, options]
 import ./utils
 
 proc mapToVariant*(source: auto, target: var auto, ignoreFields: SomeSet[string] = initHashSet[string]()) =
@@ -69,24 +69,6 @@ proc areSameType(identNode1, identNode2: NimNode): bool =
   assertKind(identNode1, nnkIdentDefs)
   assertKind(identNode2, nnkIdentDefs)
   identNode1[1] == identNode2[1]
-
-proc isTypeWithFields(typSymbol: NimNode): bool =
-  let typeDef = typSymbol.getImpl()
-  assertKind(typeDef, nnkTypeDef)
-
-  let typeKind = typeDef[2].kind
-  
-  let isObjectOrTuple = typeKind in [nnkObjectTy, nnkTupleTy]
-  if isObjectOrTuple:
-    return true
-  
-  let isRefType = typeKind == nnkRefTy
-  if isRefType:
-    let refTypeKind = typeDef[2][0].kind
-    let isRefObjectOrRefTuple = refTypeKind in [nnkObjectTy, nnkTupleTy]
-    return isRefObjectOrRefTuple
-  
-  return false
 
 proc generateResultInitialization(resultType: string, discriminatorFieldName: string, discriminatorParamName: auto): NimNode = 
   ## Generates `result = T(<discriminatorFieldName>: <discriminatorParamName>)`
