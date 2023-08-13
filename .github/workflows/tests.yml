@@ -33,7 +33,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
 
-    name: Nim ${{ matrix.nim-version }} - ${{ matrix.os }}
+    name: Nim ${{ matrix.nimversion }} - ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v1
