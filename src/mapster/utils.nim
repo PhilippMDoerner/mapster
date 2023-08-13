@@ -1,9 +1,13 @@
-import std/[strformat, macros, options, terminal]
+import std/[strformat, macros, options, sequtils, terminal, sets]
 
-proc assertKind*(node: NimNode, kind: NimNodeKind, msg: string = "") =
+proc assertKind*(node: NimNode, kind: seq[NimNodeKind], msg: string = "") =
   let boldCode = ansiStyleCode(styleBright)
   let msg = if msg == "": fmt"{boldCode} Expected a node of kind '{kind}', got '{node.kind}'" else: msg
-  doAssert node.kind == kind, msg
+  let errorMsg = msg & "\nThe node: " & node.treeRepr
+  doAssert node.kind in kind, errorMsg
+
+proc assertKind*(node: NimNode, kind: NimNodeKind, msg: string = "") =
+  assertKind(node, @[kind], msg)
 
 proc expectKind*(node: NimNode, kind: NimNodeKind, msg: string) =
   if node.kind != kind:
