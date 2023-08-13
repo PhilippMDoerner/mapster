@@ -14,9 +14,9 @@ type Dummy = object
 
 type DummyRef = ref object
 
-suite "Testing map - Assignment between tuple, object and ref object":
+suite "Testing map - Assignment between tuple, object and ref object (3x3 test matrix)":
   test """
-    GIVEN an object type A and B that share all fields 
+    1. GIVEN an object type A and B that share all fields 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
@@ -81,7 +81,7 @@ suite "Testing map - Assignment between tuple, object and ref object":
 
 
   test """
-    GIVEN a ref object type A and an object type B that share all fields 
+    2. GIVEN a ref object type A and an object type B that share all fields 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
@@ -146,7 +146,7 @@ suite "Testing map - Assignment between tuple, object and ref object":
 
 
   test """
-    GIVEN ref object types A and B that share all fields 
+    3. GIVEN ref object types A and B that share all fields 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
@@ -210,7 +210,7 @@ suite "Testing map - Assignment between tuple, object and ref object":
   
   
   test """
-    GIVEN object type A and ref object type B that share all fields 
+    4. GIVEN object type A and ref object type B that share all fields 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
@@ -275,7 +275,7 @@ suite "Testing map - Assignment between tuple, object and ref object":
 
 
   test """
-    GIVEN tuple type A and object type B that share all fields 
+    5. GIVEN tuple type A and object type B that share all fields 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
@@ -340,7 +340,7 @@ suite "Testing map - Assignment between tuple, object and ref object":
 
 
   test """
-    GIVEN tuple type A and ref object type B that share all fields 
+    6. GIVEN tuple type A and ref object type B that share all fields 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
@@ -405,7 +405,7 @@ suite "Testing map - Assignment between tuple, object and ref object":
 
 
   test """
-    GIVEN object type A and tuple type B that share all fields 
+    7. GIVEN object type A and tuple type B that share all fields 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
@@ -470,7 +470,7 @@ suite "Testing map - Assignment between tuple, object and ref object":
 
 
   test """
-    GIVEN ref object A and tuple type B that share all fields 
+    8. GIVEN ref object A and tuple type B that share all fields 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
@@ -532,8 +532,10 @@ suite "Testing map - Assignment between tuple, object and ref object":
       
       check result == expected
 
+
+
   test """
-    GIVEN tuple types A and B that share all fields 
+    9. GIVEN tuple types A and B that share all fields 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
@@ -594,11 +596,12 @@ suite "Testing map - Assignment between tuple, object and ref object":
       )
       
       check result == expected
+      
       
       
 suite "Testing map - Assignment special cases":
   test """
-    GIVEN an object type A and B where the fields of B are a subset of A 
+    1. GIVEN an object type A and B where the fields of B are a subset of A 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all of its fields having the value of their name counterparts from A
   """:
@@ -655,7 +658,7 @@ suite "Testing map - Assignment special cases":
       
       
   test """
-    GIVEN an object type A and B where the fields of A are a subset of B 
+    2. GIVEN an object type A and B where the fields of A are a subset of B 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all of its fields having the value of their name counterparts from A and all other fields left uninitialized
   """:
@@ -710,7 +713,7 @@ suite "Testing map - Assignment special cases":
       
       
   test """
-    GIVEN an object type A and B that don't share some fields
+    3. GIVEN an object type A and B that don't share some fields
     WHEN an instance of A is mapped to an instance of B with one of the fields receiving a constant value
     THEN it should create an instance of B with all fields having the value of their name counterparts from A ecept for the field with the constant value
   """:
@@ -749,7 +752,7 @@ suite "Testing map - Assignment special cases":
       
       
   test """
-    GIVEN an object type A and B that don't share some fields
+    4. GIVEN an object type A and B that don't share some fields
     WHEN an instance of A is mapped to an instance of B with one of the fields receiving a value from a proc calculation
     THEN it should create an instance of B with all fields having the value of their name counterparts from A except for the field with the proc calculation
   """:
@@ -790,7 +793,7 @@ suite "Testing map - Assignment special cases":
   
   
   test """
-    GIVEN an object type A, B and C that share some of their fields with D
+    5. GIVEN an object type A, B and C that share some of their fields with D
     WHEN an instance of A,B and C are mapped to an instance of D 
     THEN it should create an instance of D with all fields having the value of their name counterparts from A,B and C
   """:
@@ -913,3 +916,152 @@ suite "Testing map - Assignment special cases":
     let expected = B(str: "SomeStringParam")
     
     check result == expected
+
+  test """
+    GIVEN an object type A and B that share fields that only match due to case insensitivity and underscore insensitivity
+    WHEN an instance of A is mapped to an instance of B
+    THEN it should create an instance of B with all fields having the value of their name counterparts from A
+  """:
+    # Given
+    type A = object
+      str: string
+      num: int
+      floatNum: float
+
+    type B = object
+      s_t_r: string
+      nUM: int
+      float_num: float
+
+    proc map(x: A): B {.map.} =
+      result.nUM = 20
+
+    let a = A(
+      str: "str",
+      num: 5,
+      floatNum: 2.5
+    )
+    
+    # When
+    let result: B = map(a)
+    
+    # Then
+    let expected = B(
+      s_t_r: "str",
+      nUM: 20,
+      float_num: 2.5
+    )
+    
+    check result == expected
+      
+
+  test """
+    GIVEN an object type A and B that share fields that only match due to case insensitivity and underscore insensitivity
+    WHEN an instance of A is mapped to an instance of B
+    THEN it should create an instance of B with all fields having the value of their name counterparts from A
+  """:
+    # Given
+    type A = object
+      str: string
+      str2: seq[string]
+
+    type B = object
+      str: string
+      str2: seq[string]
+      str3: seq[string]
+
+    proc map(x: A, y: seq[string]): B {.map.} =
+      result.str3 = y
+    
+    let strs = @["str2", "str3"]
+    let a = A(
+      str: "str",
+      str2: @["str2", "str3"]
+    )
+    
+    # When
+    let result: B = map(a, strs)
+    
+    # Then
+    let expected = B(
+      str: "str",
+      str2: strs,
+      str3: strs
+    )
+    
+    check result == expected
+      
+
+
+  test """
+    GIVEN an object variant A and an object type B that share some fields on the instance 
+    WHEN an instance of A is mapped to an instance of B
+    THEN it should create an instance of B with all fields having the value of their name counterparts from A
+  """:
+    # Given
+    type Kind = enum
+      str, num
+    type A = object
+      case kind: Kind
+      of str: str: string
+      of num: num: int
+
+    type B = object
+      kind: Kind
+      str: string
+      num: int
+
+    proc map(x: A): B {.map.} = discard
+    
+    let a = A(
+      kind: str,
+      str: "str"
+    )
+    
+    # When
+    let result: B = map(a)
+    
+    # Then
+    let expected = B(kind: str, str: "str")
+    
+    check result == expected
+    
+    
+  test """
+    GIVEN an object variant type A and an object type B that share some fields on the instance 
+    WHEN 2 instances of A of different variant kinds are mapped to an instance of B
+    THEN it should create an instance of B with all fields having the value of their name counterparts from A
+  """:
+    # Given
+    type Kind = enum
+      str, num
+    type A = object
+      case kind: Kind
+      of str: str: string
+      of num: num: int
+
+    type B = object
+      kind: Kind
+      str: string
+      num: int
+
+    proc map(x: A, y: A): B {.map.} = discard
+    
+    let a1 = A(
+      kind: str,
+      str: "str"
+    )
+    
+    let a2 = A(
+      kind: num,
+      num: 5
+    )
+    
+    # When
+    let result: B = map(a1, a2)
+    
+    # Then
+    let expected = B(kind: num, str: "str", num: 5)
+    
+    check result == expected
+

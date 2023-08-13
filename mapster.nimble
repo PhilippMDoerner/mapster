@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.0"
+version       = "0.1.3"
 author        = "Philipp Doerner"
 description   = "A library to quickly generate functions converting instances of type A to B"
 license       = "MIT"
@@ -11,6 +11,5 @@ srcDir        = "src"
 
 requires "nim >= 1.6.0"
 
-task debug, "Compile a debug build of the library":
-    --run
-    setCommand "c", "src/mapster.nim"
+task debugTest, "Executes the tests and echo'ing the generated procs for debug purposes":
+  exec "nimble test --define:mapsterDebug"
