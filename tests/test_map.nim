@@ -601,7 +601,7 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
       
 suite "Testing map - Assignment special cases":
   test """
-    GIVEN an object type A and B where the fields of B are a subset of A 
+    1. GIVEN an object type A and B where the fields of B are a subset of A 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all of its fields having the value of their name counterparts from A
   """:
@@ -658,7 +658,7 @@ suite "Testing map - Assignment special cases":
       
       
   test """
-    GIVEN an object type A and B where the fields of A are a subset of B 
+    2. GIVEN an object type A and B where the fields of A are a subset of B 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all of its fields having the value of their name counterparts from A and all other fields left uninitialized
   """:
@@ -713,7 +713,7 @@ suite "Testing map - Assignment special cases":
       
       
   test """
-    GIVEN an object type A and B that don't share some fields
+    3. GIVEN an object type A and B that don't share some fields
     WHEN an instance of A is mapped to an instance of B with one of the fields receiving a constant value
     THEN it should create an instance of B with all fields having the value of their name counterparts from A ecept for the field with the constant value
   """:
@@ -752,7 +752,7 @@ suite "Testing map - Assignment special cases":
       
       
   test """
-    GIVEN an object type A and B that don't share some fields
+    4. GIVEN an object type A and B that don't share some fields
     WHEN an instance of A is mapped to an instance of B with one of the fields receiving a value from a proc calculation
     THEN it should create an instance of B with all fields having the value of their name counterparts from A except for the field with the proc calculation
   """:
@@ -793,7 +793,7 @@ suite "Testing map - Assignment special cases":
   
   
   test """
-    GIVEN an object type A, B and C that share some of their fields with D
+    5. GIVEN an object type A, B and C that share some of their fields with D
     WHEN an instance of A,B and C are mapped to an instance of D 
     THEN it should create an instance of D with all fields having the value of their name counterparts from A,B and C
   """:
