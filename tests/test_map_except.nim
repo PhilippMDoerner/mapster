@@ -1,3 +1,6 @@
+discard """
+  matrix: "; -d:release"
+"""
 import unittest
 
 import mapster
