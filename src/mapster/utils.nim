@@ -2,6 +2,9 @@ import std/[strformat, macros, options, sequtils, terminal, sets, sugar]
 import micros
 
 proc assertKind*(node: NimNode, kind: seq[NimNodeKind], msg: string = "") =
+  ## Custom version of expectKind, uses doAssert which can never be turned off.
+  ## Use this throughout procs to validate that the nodes they get are of specific kinds.
+  ## Also enables custom error messages.
   let boldCode = ansiStyleCode(styleBright)
   let msg = if msg == "": fmt"{boldCode} Expected a node of kind '{kind}', got '{node.kind}'" else: msg
   let errorMsg = msg & "\nThe node: " & node.treeRepr
@@ -11,6 +14,9 @@ proc assertKind*(node: NimNode, kind: NimNodeKind, msg: string = "") =
   assertKind(node, @[kind], msg)
 
 proc expectKind*(node: NimNode, kind: NimNodeKind, msg: string) =
+  ## Custom version of expectKind, uses "error" which can be turned off.
+  ## Use this within every macro to validate the user input
+  ## Also enforces custom error messages to be helpful to users.
   if node.kind != kind:
     let boldCode = ansiStyleCode(styleBright)
     let msgEnd = fmt"Caused by: Expected a node of kind '{kind}', got '{node.kind}'"
@@ -18,6 +24,8 @@ proc expectKind*(node: NimNode, kind: NimNodeKind, msg: string) =
     error(errorMsg)
 
 proc isTypeWithFields*(typSymbol: NimNode): bool =
+  ## Takes a nnkSym Node and checks if it is of a type-definition
+  ## that has fields, such as objects, ref objects or tuples. 
   let isSymbol = typSymbol.kind == nnkSym
   if not isSymbol:
     return false
@@ -52,7 +60,7 @@ template getIterator*(a: typed): untyped =
     a.fieldPairs
     
 proc getParameters*(parametersNode: NimNode): seq[NimNode] =
-  ## Takes in a Node containing all parameters and the result-type of a proc definition.
+  ## Takes in a nnkFormalParams Node which has all parameters and the result-type of a proc definition.
   ## Returns a list of only the parameters. 
   ## Each parameter is an IdentDefs-Node in the shape of:
   ## IdentDefs
@@ -67,14 +75,20 @@ proc getParameters*(parametersNode: NimNode): seq[NimNode] =
     result.add node
 
 proc getFieldName(assignment: NimNode): string =
+  ## Takes in a nnkAsgn Node which represents an assignment in the
+  ## shape of
+  ## `obj1.field1 = obj2.field2`
+  ## Returns the name of field1 which gets assigned to.
   assertKind(assignment, nnkAsgn)
   
-  let fieldSym: NimNode = assignment[0][1]
-  assertKind(fieldSym, nnkSym)
+  let assignedFieldSymbol: NimNode = assignment[0][1]
+  assertKind(assignedFieldSymbol, nnkSym)
   
-  return $fieldSym
+  return $assignedFieldSymbol
 
 proc getFieldsOfObjectType*(typeSym: NimNode): HashSet[string] =
+  ## Takes in a nnkSym Node which represents a type-definition of an object type. 
+  ## Returns a Set of all field names the object-type has.
   expectKind(typeSym, nnkSym)
   
   let obj = objectDef(typeSym)
@@ -84,6 +98,8 @@ proc getFieldsOfObjectType*(typeSym: NimNode): HashSet[string] =
       result.incl($nameNode)
 
 proc getFieldsOfTupleType(tupleTy: NimNode): HashSet[string] =
+  ## Takes in a nnkSym Node which represents a type-definition of a tuple type. 
+  ## Returns a Set of all field names the tuple-type has.
   expectKind(tupleTy, nnkTupleTy)
   for field in tupleTy:
     expectKind(field, nnkIdentDefs)
@@ -91,6 +107,9 @@ proc getFieldsOfTupleType(tupleTy: NimNode): HashSet[string] =
     result.incl(fieldName)
       
 proc getFieldsOfType*(sym: NimNode): HashSet[string] =
+  ## Takes in a nnkSym Node which represents a type-definition of a
+  ## tuple, object or ref object type.
+  ## Returns a Set of all field names the type has.
   assertKind(sym, nnkSym)
   let typeDef: NimNode = sym.getImpl()
   assertKind(typeDef, nnkTypeDef)
@@ -110,6 +129,11 @@ proc getFieldsOfType*(sym: NimNode): HashSet[string] =
 
 
 proc getAssignedFields*(procBody: NimNode): seq[string] =
+  ## Takes in a Node which represents the proc-body of a
+  ## mapping function, which may contain user-defined assignments to fields on the result-type.
+  ## Returns a seq of all fields that get assigned to in this proc-body.
+  assertKind(procBody, nnkStmtList)
+  
   let hasAssignments = procBody.kind in [nnkAsgn, nnkStmtList]
   case procBody.kind:
   of nnkAsgn:
@@ -124,6 +148,9 @@ proc getAssignedFields*(procBody: NimNode): seq[string] =
     return @[] 
 
 proc getAutoAssignableFields*(paramNode: NimNode, paramsToIgnore: seq[string] = @[]): HashSet[string] =
+  ## Takes in a nnkFormalParams Node which represents all parameters and the result-type of a proc definition.
+  ## Returns a set of all fields from the result-type that a field from one of the proc
+  ## parameters can be mapped to automatically.
   assertKind(paramNode, nnkFormalParams)
   
   let params: seq[NimNode] = paramNode.getParameters()
@@ -142,7 +169,7 @@ proc getAutoAssignableFields*(paramNode: NimNode, paramsToIgnore: seq[string] = 
     result.incl(typeFields)
     
 proc getResultType*(parametersNode: NimNode): NimNode =
-  ## Takes in a Node containing all parameters and the result-type of a proc definition.
+  ## Takes in a nnkFormalParams Node containing all parameters and the result-type of a proc definition.
   ## Returns the type definition of the result type. 
   ## Result type is a TypeDef-Node in the shape of:
   ## TypeDef
@@ -210,8 +237,10 @@ proc getParameterOfName*(parametersNode: NimNode, parameterName: string): Option
     .getParameterOfName(parameterName)
 
 template debugProcNode*(node: NimNode) =
+  ## Enables debug echo'ing for tests.
+  ## Takes in a nnkProcDef node which is a proc-definition.
+  ## When compiled with `-d:mapsterDebug` this will echo the fully generated proc-definition
   expectKind(node, nnkProcDef)
   
   when defined(mapsterDebug):
-    discard
-    # echo "Generated Procedure: \n",node.repr
+    echo "Generated Procedure: \n",node.repr
