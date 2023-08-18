@@ -1,4 +1,5 @@
-import std/[strformat, macros, options, sequtils, terminal, sets]
+import std/[strformat, macros, options, sequtils, terminal, sets, sugar]
+import micros
 
 proc assertKind*(node: NimNode, kind: seq[NimNodeKind], msg: string = "") =
   let boldCode = ansiStyleCode(styleBright)
@@ -50,7 +51,6 @@ template getIterator*(a: typed): untyped =
   else:
     a.fieldPairs
     
-
 proc getParameters*(parametersNode: NimNode): seq[NimNode] =
   ## Takes in a Node containing all parameters and the result-type of a proc definition.
   ## Returns a list of only the parameters. 
@@ -74,6 +74,22 @@ proc getFieldName(assignment: NimNode): string =
   
   return $fieldSym
 
+proc getFieldsOfObjectType*(typeSym: NimNode): HashSet[string] =
+  expectKind(typeSym, nnkSym)
+  
+  let obj = objectDef(typeSym)
+  for idents in obj.fields:
+    for name in idents.names:
+      let nameNode = name.NimNode
+      result.incl($nameNode)
+
+proc getFieldsOfTupleType(tupleTy: NimNode): HashSet[string] =
+  expectKind(tupleTy, nnkTupleTy)
+  for field in tupleTy:
+    expectKind(field, nnkIdentDefs)
+    let fieldName = $field[0]
+    result.incl(fieldName)
+      
 proc getFieldsOfType*(sym: NimNode): HashSet[string] =
   assertKind(sym, nnkSym)
   let typeDef: NimNode = sym.getImpl()
@@ -86,48 +102,12 @@ proc getFieldsOfType*(sym: NimNode): HashSet[string] =
       typedef[2]
   assertKind(typeNode, @[nnkObjectTy, nnkTupleTy])
   
-  var fieldsNode: NimNode
   case typeNode.kind:
-  of nnkTupleTy:  
-    fieldsNode = typeNode
-  of nnkObjectTy: 
-    fieldsNode = typeNode[2]
-  else: 
-    error("Failed to get fieldsNode for kind " & $(typeNode.kind))
+  of nnkTupleTy: return getFieldsOfTupleType(typeNode)
+  of nnkObjectTy: return getFieldsOfObjectType(sym)
+  else: error("Failed to get fieldsNode for kind " & $(typeNode.kind))
 
-  assertKind(fieldsNode, @[nnkRecList, nnkTupleTy])
-  for field in fieldsNode:
-    case field.kind:
-    of nnkIdentDefs:
-      let fieldName = $field[0]
-      result.incl(fieldName)
-      
-    of nnkRecCase: # isNodeOfObjectVariantSection
-      for variantField in field:
-        case variantField.kind:
-        of nnkIdentDefs: # isKindField
-          let fieldName = $variantField[0]
-          result.incl(fieldName)
-          
-        of nnkOfBranch:  # is of-branch section of object variant
-          let branchNode = variantField
-          for node in branchNode:
-            case node.kind:
-            of nnkIdent: # isNodeWithOf-Value of Branch
-              continue
-            
-            of nnkIdentDefs:
-              let fieldName  = $node[0]
-              result.incl(fieldName)
-              
-            else:
-              error("Got field of unexpected kind in of branch of object variant fields: " & node.treeRepr)
-    
-        else:
-          error("Got field of unexpected kind in object variant section: " & variantField.treeRepr)
-    
-    else:
-      error("Got field of unexpected kind: " & field.treeRepr)
+
 
 proc getAssignedFields*(procBody: NimNode): seq[string] =
   let hasAssignments = procBody.kind in [nnkAsgn, nnkStmtList]
@@ -161,12 +141,6 @@ proc getAutoAssignableFields*(paramNode: NimNode, paramsToIgnore: seq[string] = 
     let typeFields: HashSet[string] = typeSym.getFieldsOfType()
     result.incl(typeFields)
     
-proc getAllObjectVariantFields*(variantType: typedesc[auto], kindType: typedesc[enum]): HashSet[string] =
-  result = initHashSet[string]()
-  for kind in kindType:
-    for field, val in variantType(kind: kind).fieldPairs:
-      result.incl field
-
 proc getResultType*(parametersNode: NimNode): NimNode =
   ## Takes in a Node containing all parameters and the result-type of a proc definition.
   ## Returns the type definition of the result type. 
@@ -239,4 +213,5 @@ template debugProcNode*(node: NimNode) =
   expectKind(node, nnkProcDef)
   
   when defined(mapsterDebug):
-    echo "Generated Procedure: \n",node.repr
+    discard
+    # echo "Generated Procedure: \n",node.repr
