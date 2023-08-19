@@ -1,5 +1,5 @@
 discard """
-  matrix: "; -d:release"
+  matrix: "; -d:mapsterValidate"
 """
 import unittest
 
