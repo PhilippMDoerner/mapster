@@ -22,14 +22,14 @@ proc generateMapCall(variableName: string, resultTypeName: string): NimNode =
     newIdentNode("result")
   )
 
-proc validateProcDef(procDef: NimNode) =
+proc validateProcDef(procDef: NimNode, paramsToIgnore: openArray[string] = @[]) =
   ## Checks that all fields on the result-type has values being assigned to
   assertKind(procDef, nnkProcDef)
   let procBody = procDef.body
   let paramsNode = procDef.params
   
   let manuallyAssignedFields: seq[string] = procBody.getAssignedFields()
-  let autoAssignableFields: HashSet[string] = paramsNode.getAutoAssignableFields()
+  let autoAssignableFields: HashSet[string] = paramsNode.getAutoAssignableFields(paramsToIgnore)
   
   let resultTypeSym = paramsNode[0]
   assertKind(resultTypeSym, @[nnkSym])
@@ -129,12 +129,15 @@ proc createMapProc(procDef: NimNode, paramsToIgnore: varargs[string] = @[]): Nim
   debugProcNode newProc
   return newProc
 
+macro mapExcept*(exclude: varargs[string], procDef: typed): untyped =
+  let exclusions: seq[string] = exclude.mapIt($it) # For some reason exclude gets turned into NimNode, this turns that back
+  when defined(mapsterValidate):
+    validateProcDef(procDef, exclusions)
+  return createMapProc(procDef, exclusions)
+
 macro map*(procDef: typed): untyped =
   expectKind(procDef, nnkProcDef, "Annotated line is not a proc definition!\nYou may only use map as a pragma to annotate a proc definition!")
   when defined(mapsterValidate):
     validateProcDef(procDef)
   return createMapProc(procDef)
 
-macro mapExcept*(exclude: varargs[string], procDef: typed): untyped =
-  let exclusions: seq[string] = exclude.mapIt($it) # For some reason exclude gets turned into NimNode, this turns that back
-  return createMapProc(procDef, exclusions)

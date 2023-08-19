@@ -145,7 +145,7 @@ proc getAssignedFields*(procBody: NimNode): seq[string] =
   else:
     return @[] 
 
-proc getAutoAssignableFields*(paramNode: NimNode, paramsToIgnore: seq[string] = @[]): HashSet[string] =
+proc getAutoAssignableFields*(paramNode: NimNode, paramsToIgnore: openArray[string] = @[]): HashSet[string] =
   ## Takes in a nnkFormalParams Node which represents all parameters and the result-type of a proc definition.
   ## Returns a set of all fields from the result-type that a field from one of the proc
   ## parameters can be mapped to automatically.
