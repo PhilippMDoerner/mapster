@@ -15,5 +15,5 @@ requires "micros"
 task debugTest, "Executes the tests and echo'ing the generated procs for debug purposes (fast)":
   exec "nimble test --define:mapsterDebug"
   
-task test, "Executes the entire test-suite with testament (slow)":
+task testament, "Executes the entire test-suite with testament (slow)":
   exec "testament pattern 'tests/*.nim'"
