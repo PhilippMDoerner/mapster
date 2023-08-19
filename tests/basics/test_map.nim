@@ -1,7 +1,7 @@
 discard """
   matrix: "; -d:mapsterValidate"
 """ 
-import mapster
+import ../../src/mapster
 import std/[unittest, times]
 
 type Dummy = object

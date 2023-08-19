@@ -3,7 +3,7 @@ discard """
 """
 import unittest
 
-import mapster
+import ../../src/mapster
 import std/[times]
 
 type Dummy = object

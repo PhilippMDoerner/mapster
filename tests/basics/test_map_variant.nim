@@ -1,10 +1,9 @@
 discard """
   matrix: "; -d:mapsterValidate"
 """
-import unittest
 
-import mapster
-import std/[times, macros]
+import std/[times, unittest, macros]
+import ../../src/mapster
 
 type Dummy = object
 type DummyRef = ref object
