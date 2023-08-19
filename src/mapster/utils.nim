@@ -131,9 +131,7 @@ proc getFieldsOfType*(sym: NimNode): HashSet[string] =
 proc getAssignedFields*(procBody: NimNode): seq[string] =
   ## Takes in a Node which represents the proc-body of a
   ## mapping function, which may contain user-defined assignments to fields on the result-type.
-  ## Returns a seq of all fields that get assigned to in this proc-body.
-  assertKind(procBody, nnkStmtList)
-  
+  ## Returns a seq of all fields that get assigned to in this proc-body.  
   let hasAssignments = procBody.kind in [nnkAsgn, nnkStmtList]
   case procBody.kind:
   of nnkAsgn:
