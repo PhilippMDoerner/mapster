@@ -1,5 +1,5 @@
 discard """
-  matrix: "; -d:mapsterValidate"
+  matrix: "; -d:mapsterValidateVariant"
 """
 
 import std/[times, unittest, sugar, macros]
@@ -435,7 +435,7 @@ suite "Testing mapVariant - Assignment special case - manual assignments":
     
     check result == expected
 
-when not defined(mapsterValidate):
+when not defined(mapsterValidateVariant):
   suite "Testing mapVariant - Assignment special case - missing assignments":
     test """
       1. GIVEN a type A and an object variant B where every variant of B does not share all fields with A

@@ -197,7 +197,7 @@ macro mapVariant*(kindParamName: string, procDef: typed): untyped =
   let parameterNode = procDef.params
   
   validateObjectVariantRequirements(parameterNode, $kindParamName)
-  when defined(mapsterValidate):
+  when defined(mapsterValidateVariant):
     validateFieldAssignments(procDef, $kindParamName)
   
   return createMapProc(procDef, $kindParamName)
