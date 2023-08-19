@@ -2,7 +2,7 @@ discard """
   action: "reject"
   matrix: "--define:mapsterValidate"
   errorMsg: "'B.num' is never assigned a value!"
-  file: "mapster.nim"
+  file: "map.nim"
 """
 
 # GIVEN an object type A and B where not every field of B can be mapped to a field on A
