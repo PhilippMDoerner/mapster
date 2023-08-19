@@ -1,10 +1,8 @@
 discard """
-  matrix: "; -d:release"
-"""
-import unittest
-
+  matrix: "; -d:mapsterValidate"
+""" 
 import mapster
-import std/[times]
+import std/[unittest, times]
 
 type Dummy = object
 
@@ -595,7 +593,7 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
       
       
       
-suite "Testing map - Assignment special cases":
+suite "Testing map - Assignment special cases in general":
   test """
     1. GIVEN an object type A and B where the fields of B are a subset of A 
     WHEN an instance of A is mapped to an instance of B
@@ -647,61 +645,6 @@ suite "Testing map - Assignment special cases":
         str: parameterSet[0],
         num: parameterSet[1],
         floatNum: parameterSet[2],
-      )
-      
-      check result == expected
-      
-      
-      
-  test """
-    2. GIVEN an object type A and B where the fields of A are a subset of B 
-    WHEN an instance of A is mapped to an instance of B
-    THEN it should create an instance of B with all of its fields having the value of their name counterparts from A and all other fields left uninitialized
-  """:
-    # Given
-    type A = object
-      str: string
-      num: int
-      floatNum: float
-
-    
-    type B = object
-      str: string
-      num: int
-      floatNum: float
-      dateTime: DateTime
-      boolean: bool
-      obj: Dummy
-      objRef: DummyRef
-      
-    let parameterSets = @[
-      ("str", 5, 2.5),
-      ("longer string for testing purposes only this time I promise", 5, 2.5),
-      ("", 5, 2.5),
-      ("str", 0, 2.5),
-      ("str", -5, 2.5),
-      ("str", 5, -2.5),
-    ]
-    proc map(x: A): B {.map.} = discard
-
-    for parameterSet in parameterSets:  
-      let a = A(
-        str: parameterSet[0],
-        num: parameterSet[1],
-        floatNum: parameterSet[2],
-      )
-      
-      # When
-      let result: B = map(a)
-      
-      # Then
-      let expected = B(
-        str: parameterSet[0],
-        num: parameterSet[1],
-        floatNum: parameterSet[2],
-        boolean: false,
-        obj: Dummy(),
-        objRef: nil
       )
       
       check result == expected
@@ -887,7 +830,6 @@ suite "Testing map - Assignment special cases":
     check result == expected
 
 
-
   test """
     GIVEN an object type A and B
     WHEN an instance of A is mapped to an instance of B together with a non-object kind parameter with an assignment that makes use of the parameter
@@ -1060,4 +1002,59 @@ suite "Testing map - Assignment special cases":
     let expected = B(kind: num, str: "str", num: 5)
     
     check result == expected
+    
 
+when not defined(mapsterValidate):
+  suite "Testing map - Assignment special cases with no field assignments and no validation":
+    test """
+      1. GIVEN an object type A and B where not every field of B can be mapped to a field on A 
+      WHEN an instance of A is mapped to an instance of B
+      THEN it should create an instance of B with all of its fields having the value of their name counterparts from A and all other fields left uninitialized
+    """:
+      # Given
+      type A = object
+        str: string
+        num: int
+        floatNum: float
+
+      
+      type B = object
+        str: string
+        num: int
+        floatNum: float
+        dateTime: DateTime
+        boolean: bool
+        obj: Dummy
+        objRef: DummyRef
+        
+      let parameterSets = @[
+        ("str", 5, 2.5),
+        ("longer string for testing purposes only this time I promise", 5, 2.5),
+        ("", 5, 2.5),
+        ("str", 0, 2.5),
+        ("str", -5, 2.5),
+        ("str", 5, -2.5),
+      ]
+      proc map(x: A): B {.map.} = discard
+
+      for parameterSet in parameterSets:  
+        let a = A(
+          str: parameterSet[0],
+          num: parameterSet[1],
+          floatNum: parameterSet[2],
+        )
+        
+        # When
+        let result: B = map(a)
+        
+        # Then
+        let expected = B(
+          str: parameterSet[0],
+          num: parameterSet[1],
+          floatNum: parameterSet[2],
+          boolean: false,
+          obj: Dummy(),
+          objRef: nil
+        )
+        
+        check result == expected
