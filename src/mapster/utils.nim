@@ -7,7 +7,7 @@ proc assertKind*(node: NimNode, kind: seq[NimNodeKind], msg: string = "") =
   ## Also enables custom error messages.
   let boldCode = ansiStyleCode(styleBright)
   let msg = if msg == "": fmt"{boldCode} Expected a node of kind '{kind}', got '{node.kind}'" else: msg
-  let errorMsg = msg & "\nThe node: " & node.treeRepr
+  let errorMsg = msg & "\nThe node: " & node.repr & "\n" & node.treeRepr
   doAssert node.kind in kind, errorMsg
 
 proc assertKind*(node: NimNode, kind: NimNodeKind, msg: string = "") =
@@ -77,14 +77,42 @@ proc getParameters*(parametersNode: NimNode): seq[NimNode] =
 proc getFieldName(assignment: NimNode): string =
   ## Takes in a nnkAsgn Node which represents an assignment in the
   ## shape of
-  ## `obj1.field1 = obj2.field2`
+  ## `obj1.field1 = <whatever>`
+  ## In terms of Node variation, these may be:
+  ## Asgn
+  ##   DotExpr
+  ##     Sym "obj1"
+  ##     Sym "field1"
+  ##   <Whatever>
+  ## or with checked fields on object variants:
+  ## Asgn
+  ##   CheckedFieldExpr
+  ##     DotExpr
+  ##       Sym "result"
+  ##       Sym "myStr"
+  ##     <nnkCall for discriminator-field>
+  ##   <Whatever>
   ## Returns the name of field1 which gets assigned to.
   assertKind(assignment, nnkAsgn)
+  echo assignment.treeRepr
+    
+  case assignment[0].kind:
+  of nnkDotExpr:
+    let assignedFieldSymbol: NimNode = assignment[0][1]
+    assertKind(assignedFieldSymbol, nnkSym)
+    return $assignedFieldSymbol
   
-  let assignedFieldSymbol: NimNode = assignment[0][1]
-  assertKind(assignedFieldSymbol, nnkSym)
-  
-  return $assignedFieldSymbol
+  of nnkCheckedFieldExpr: # Occurs for object-variants
+    let assignedFieldSymbol: NimNode = assignment[0][0][1]
+    assertKind(assignedFieldSymbol, nnkSym)
+    
+    return $assignedFieldSymbol
+  else:
+    error(fmt"""
+      Could not get field name for assignment to object variant.
+      {assignment.repr}
+      {assignment.treeRepr}
+    """)
 
 proc getFieldsOfObjectType*(typeSym: NimNode): HashSet[string] =
   ## Takes in a nnkSym Node which represents a type-definition of an object type. 
@@ -145,10 +173,9 @@ proc getAssignedFields*(procBody: NimNode): seq[string] =
   else:
     return @[] 
 
-proc getAutoAssignableFields*(paramNode: NimNode, paramsToIgnore: openArray[string] = @[]): HashSet[string] =
+proc getParameterFields*(paramNode: NimNode, paramsToIgnore: openArray[string] = @[]): HashSet[string] =
   ## Takes in a nnkFormalParams Node which represents all parameters and the result-type of a proc definition.
-  ## Returns a set of all fields from the result-type that a field from one of the proc
-  ## parameters can be mapped to automatically.
+  ## Returns a set of all fields on all proc parameters that are available field.
   assertKind(paramNode, nnkFormalParams)
   
   let params: seq[NimNode] = paramNode.getParameters()

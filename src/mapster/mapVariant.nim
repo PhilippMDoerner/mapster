@@ -124,7 +124,6 @@ proc toMapProcBody(procBody: NimNode, paramNode: NimNode, kindParamName: string)
   
   return newProcBody
 
-
 proc createMapProc(procDef: NimNode, kindParamName: string): NimNode = 
   assertKind(procDef, nnkProcDef)
   let newProc: NimNode = procDef.copy
@@ -136,15 +135,46 @@ proc createMapProc(procDef: NimNode, kindParamName: string): NimNode =
   newProc.body = newProcBody
   debugProcNode newProc
   return newProc
+  
+proc validateFieldAssignments(procDef: NimNode, kindParamName: string, paramsToIgnore: openArray[string] = @[]) =
+  ## Checks that all fields on the result-type has values being assigned to
+  assertKind(procDef, nnkProcDef)
+  let procBody: NimNode = procDef.body
+  let paramsNode: NimNode = procDef.params
+  let resultType: NimNode = paramsNode.getResultType()
+  let resultTypeSym: NimNode = paramsNode.getResultTypeSymbol()
+  assertKind(resultTypeSym, @[nnkSym])
 
-proc validateProcDef(procDef: NimNode, kindParamName: string) =
+  let manuallyAssignedFields: seq[string] = procBody.getAssignedFields()
+  let autoAssignableFields: HashSet[string] = paramsNode.getParameterFields(paramsToIgnore)
+  let discriminatorField: NimNode = getDiscriminatorField(resultType)
+  let discriminatorFieldName: string = $discriminatorField[0]
+  
+  let targetFields: HashSet[string] = resultTypeSym.getFieldsOfType()
+  for targetField in targetFields:
+    let isGettingKindParamAssignedTo = targetField == discriminatorFieldName
+    if isGettingKindParamAssignedTo:
+      continue
+    
+    let hasManualAssignment = manuallyAssignedFields.anyIt(it.eqIdent(targetField))
+    let hasAutomaticAssignment = autoAssignableFields.anyIt(it.eqIdent(targetField))
+    let isGetingAssignedTo = hasManualAssignment or hasAutomaticAssignment
+    
+    if not isGetingAssignedTo:
+      let resultTypeStr = $paramsNode.getResultType()[0]
+      error(fmt"""
+        '{resultTypeStr}.{targetField}' is never assigned a value! 
+        There is no field on a parameter that could map to '{targetField}'
+        nor is there a manual assignment in the proc-body to this field!
+      """)
+
+proc validateObjectVariantRequirements(parameterNode: NimNode, kindParamName: string) =
   ## Validates that the proc definition that is passed in:
   ## - Has parameter with the name `kindParamName`
   ## - Has an object variant as a result-type
   ## - The object variant has a discriminator field with the same type as the parameter called `kindParamName`
-  assertKind(procDef, nnkProcDef) 
-  
-  let parameterNode = procDef.params
+  assertKind(parameterNode, nnkFormalParams) 
+
   let resultType: NimNode = parameterNode.getResultType()
   let parameters: seq[NimNode] = parameterNode.getParameters()
   let resultKindParameter: Option[NimNode] = parameters.getParameterOfName($kindParamName)
@@ -161,7 +191,13 @@ proc validateProcDef(procDef: NimNode, kindParamName: string) =
       '{kindParamName}' must be of type '{discriminatorField[1]}' for field '{resultType[0]}.{discriminatorField[0]}'!
     """)
 
+
 macro mapVariant*(kindParamName: string, procDef: typed): untyped =
   expectKind(procDef, nnkProcDef, "Annotated line is not a proc definition!\nYou may only use mapVariant as a pragma to annotate a proc definition!")
-  validateProcDef(procDef, $kindParamName)  
+  let parameterNode = procDef.params
+  
+  validateObjectVariantRequirements(parameterNode, $kindParamName)
+  when defined(mapsterValidate):
+    validateFieldAssignments(procDef, $kindParamName)
+  
   return createMapProc(procDef, $kindParamName)

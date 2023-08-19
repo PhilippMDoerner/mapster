@@ -29,9 +29,9 @@ proc validateProcDef(procDef: NimNode, paramsToIgnore: openArray[string] = @[]) 
   let paramsNode = procDef.params
   
   let manuallyAssignedFields: seq[string] = procBody.getAssignedFields()
-  let autoAssignableFields: HashSet[string] = paramsNode.getAutoAssignableFields(paramsToIgnore)
+  let autoAssignableFields: HashSet[string] = paramsNode.getParameterFields(paramsToIgnore)
   
-  let resultTypeSym = paramsNode[0]
+  let resultTypeSym = paramsNode.getResultTypeSymbol()
   assertKind(resultTypeSym, @[nnkSym])
   let targetFields: HashSet[string] = resultTypeSym.getFieldsOfType()
   echo "Fields: ", targetFields, "\n AutoAssignable:", autoAssignableFields, "\nManuallyAssigned:", manuallyAssignedFields
