@@ -269,3 +269,30 @@ template debugProcNode*(node: NimNode) =
   
   when defined(mapsterDebug):
     echo "Generated Procedure: \n",node.repr
+    
+
+proc validateFieldAssignments*(procDef: NimNode, paramsToIgnore: openArray[string] = [], fieldsToIgnore: openArray[string] = []) = 
+  assertKind(procDef, nnkProcDef)
+  let procBody: NimNode = procDef.body
+  let paramsNode: NimNode = procDef.params
+
+  let manuallyAssignedFields: seq[string] = procBody.getAssignedFields()
+  let autoAssignableFields: HashSet[string] = paramsNode.getParameterFields(paramsToIgnore)
+  
+  let resultTypeSym: NimNode = paramsNode.getResultTypeSymbol()
+  assertKind(resultTypeSym, @[nnkSym])
+  let targetFields: HashSet[string] = resultTypeSym.getFieldsOfType()
+  
+  for targetField in targetFields:
+    let isFieldToIgnore = fieldsToIgnore.anyIt(it.eqIdent(targetField))
+    let hasManualAssignment = manuallyAssignedFields.anyIt(it.eqIdent(targetField))
+    let hasAutomaticAssignment = autoAssignableFields.anyIt(it.eqIdent(targetField))
+    let isGetingAssignedTo = hasManualAssignment or hasAutomaticAssignment or isFieldToIgnore
+    
+    if not isGetingAssignedTo:
+      let resultTypeStr = $paramsNode.getResultType()[0]
+      error(fmt"""
+        '{resultTypeStr}.{targetField}' is never assigned a value! 
+        There is no field on a parameter that could map to '{targetField}'
+        nor is there a manual assignment in the proc-body to this field!
+      """)

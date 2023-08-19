@@ -24,29 +24,7 @@ proc generateMapCall(variableName: string, resultTypeName: string): NimNode =
 
 proc validateProcDef(procDef: NimNode, paramsToIgnore: openArray[string] = @[]) =
   ## Checks that all fields on the result-type has values being assigned to
-  assertKind(procDef, nnkProcDef)
-  let procBody = procDef.body
-  let paramsNode = procDef.params
-  
-  let manuallyAssignedFields: seq[string] = procBody.getAssignedFields()
-  let autoAssignableFields: HashSet[string] = paramsNode.getParameterFields(paramsToIgnore)
-  
-  let resultTypeSym = paramsNode.getResultTypeSymbol()
-  assertKind(resultTypeSym, @[nnkSym])
-  let targetFields: HashSet[string] = resultTypeSym.getFieldsOfType()
-  echo "Fields: ", targetFields, "\n AutoAssignable:", autoAssignableFields, "\nManuallyAssigned:", manuallyAssignedFields
-  for targetField in targetFields:
-    let hasManualAssignment = manuallyAssignedFields.anyIt(it.eqIdent(targetField))
-    let hasAutomaticAssignment = autoAssignableFields.anyIt(it.eqIdent(targetField))
-    let isGetingAssignedTo = hasManualAssignment or hasAutomaticAssignment
-    
-    if not isGetingAssignedTo:
-      let resultTypeStr = $paramsNode.getResultType()[0]
-      error(fmt"""
-        '{resultTypeStr}.{targetField}' is never assigned a value! 
-        There is no field on a parameter that could map to '{targetField}'
-        nor is there a manual assignment in the proc-body to this field!
-      """)
+  validateFieldAssignments(procDef, paramsToIgnore)
 
 proc isObjectType(typSymbol: NimNode): bool =
   assertKind(typSymbol, nnkSym)
