@@ -94,7 +94,6 @@ proc getFieldName(assignment: NimNode): string =
   ##   <Whatever>
   ## Returns the name of field1 which gets assigned to.
   assertKind(assignment, nnkAsgn)
-  echo assignment.treeRepr
     
   case assignment[0].kind:
   of nnkDotExpr:
@@ -114,6 +113,44 @@ proc getFieldName(assignment: NimNode): string =
       {assignment.treeRepr}
     """)
 
+proc getVarName(assignment: NimNode): string =
+  ## Takes in a nnkAsgn Node which represents an assignment in the
+  ## shape of
+  ## `obj1.field1 = <whatever>`
+  ## In terms of Node variation, these may be:
+  ## Asgn
+  ##   DotExpr
+  ##     Sym "obj1"
+  ##     Sym "field1"
+  ##   <Whatever>
+  ## or with checked fields on object variants:
+  ## Asgn
+  ##   CheckedFieldExpr
+  ##     DotExpr
+  ##       Sym "result"
+  ##       Sym "myStr"
+  ##     <nnkCall for discriminator-field>
+  ##   <Whatever>
+  ## Returns the name of the variable whose field is getting assigned to.
+  assertKind(assignment, nnkAsgn)
+    
+  case assignment[0].kind:
+  of nnkDotExpr:
+    let assignedVarSymbol: NimNode = assignment[0][0]
+    assertKind(assignedVarSymbol, nnkSym)
+    return $assignedVarSymbol
+  
+  of nnkCheckedFieldExpr: # Occurs for object-variants
+    let assignedVarSymbol: NimNode = assignment[0][0][0]
+    assertKind(assignedVarSymbol, nnkSym)
+    
+    return $assignedVarSymbol
+  else:
+    error(fmt"""
+      Could not get field name for assignment to object variant.
+      {assignment.repr}
+      {assignment.treeRepr}
+    """)
 proc getFieldsOfObjectType*(typeSym: NimNode): HashSet[string] =
   ## Takes in a nnkSym Node which represents a type-definition of an object type. 
   ## Returns a Set of all field names the object-type has.
@@ -154,24 +191,34 @@ proc getFieldsOfType*(sym: NimNode): HashSet[string] =
   of nnkObjectTy: return getFieldsOfObjectType(sym)
   else: error("Failed to get fieldsNode for kind " & $(typeNode.kind))
 
+proc getNodesOfKind*(procBody: NimNode, nodeKind: NimNodeKind): seq[NimNode] =
+  for node in procBody.children:
+    let isAssignmentNode = node.kind == nodeKind
+    if isAssignmentNode:
+      result.add(node)
+    else:
+      let assignments: seq[NimNode] = getNodesOfKind(node, nnkAsgn)
+      result.add(assignments)
 
 
 proc getAssignedFields*(procBody: NimNode): seq[string] =
   ## Takes in a Node which represents the proc-body of a
   ## mapping function, which may contain user-defined assignments to fields on the result-type.
   ## Returns a seq of all fields that get assigned to in this proc-body.  
-  let hasAssignments = procBody.kind in [nnkAsgn, nnkStmtList]
-  case procBody.kind:
-  of nnkAsgn:
-    let assignment = procBody
-    return @[assignment.getFieldName()]
+  # TODO: Write proc that gets all assignment nodes
+  # Filter all assignment nodes down to those that have "result" as a symNode
+  let assignmentNodes: seq[NimNode] = if procBody.kind == nnkAsgn:
+      @[procBody]
+    else: 
+      procBody.getNodesOfKind(nnkAsgn)
   
-  of nnkStmtList:   
-    let assignments = procBody 
-    return assignments.mapIt(it.getFieldName())
-  
-  else:
-    return @[] 
+  for assignment in assignmentNodes:
+    assertKind(assignment, nnkAsgn)
+    let isAssignmentToResult = assignment.getVarName() == "result"
+    if isAssignmentToResult:
+      let assignedFieldName = assignment.getFieldName()
+      result.add(assignedFieldName)
+    
 
 proc getParameterFields*(paramNode: NimNode, paramsToIgnore: openArray[string] = @[]): HashSet[string] =
   ## Takes in a nnkFormalParams Node which represents all parameters and the result-type of a proc definition.
