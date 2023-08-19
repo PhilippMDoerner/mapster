@@ -16,4 +16,4 @@ task debugTest, "Executes the tests and echo'ing the generated procs for debug p
   exec "nimble test --define:mapsterDebug"
   
 task testament, "Executes the entire test-suite with testament (slow)":
-  exec "testament pattern 'tests/*.nim'"
+  exec "testament pattern 'tests/**/*.nim'"
