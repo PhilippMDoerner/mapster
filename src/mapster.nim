@@ -1,5 +1,5 @@
-import ./private/mapster
-import ./private/mapsterVariant
+import ./mapster/map
+import ./mapster/mapVariant
 
-export mapster
-export mapsterVariant
+export map
+export mapVariant

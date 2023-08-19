@@ -40,8 +40,15 @@ Write assignments in the proc-body as needed. Mapster will add assignment statem
 
 Once the proc is written, annotate it with the `{.map.}` or `{.mapExcept: <fields to not auto-map>.}` pragmas.
 
-**Note:** Mapster **does not check** that all fields are getting values assigned!
+
+##  Safety
+Mapster by default **does not check** that all fields are getting values assigned!
 If your result-type contains fields that remain default-initialized after the mapping, mapster will not raise an Exception.
+
+Mapster does however provide the option to check that all fields get assigned to at compile-time. 
+
+Use the `-d:mapsterValidate` compiler flag to enable this behaviour for the `{.map.}` and `{.mapExcept.}` pragma.
+Use the `-d:mapsterValidateVariant` compiler flag to enable this behaviour for the `{.mapVariant.}` pragma. (Variant has a separate flag as its flag requires you to have assignments ready for **all** fields of any of its variants)
 
 ## Examples
 ### Mapping without custom Logic

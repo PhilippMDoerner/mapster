@@ -1,7 +1,9 @@
-import unittest
+discard """
+  matrix: "; -d:mapsterValidateVariant"
+"""
 
-import mapster
-import std/[times, macros]
+import std/[times, unittest, sugar, macros]
+import ../../src/mapster
 
 type Dummy = object
 type DummyRef = ref object
@@ -398,53 +400,7 @@ suite "Testing mapVariant - Assignment between tuple/object/ref object to object
       check result[] == expected[]
 
 
-
-suite "Testing mapVariant - Assignment special case":
-  test """
-    1. GIVEN a type A and an object variant B where every variant of B does not share all fields with A
-    WHEN an instance of A is mapped to an instance of a specific variant of B
-    THEN it should create an instance of B of that variant where fields that do not map remain with default initialized values
-  """:
-    
-    # Given
-    type A = object
-      outer: string
-      str1: string
-      str2: string
-    
-    type Kind = enum
-      one, two
-      
-    type B = object
-      outer: string
-      case kind: Kind
-      of one: 
-        str1: string
-        notMap1: float
-      of two:
-        str2: string
-        notMap2: int
-
-    let a = A(outer: "outer", str1: "str1", str2: "str2")
-    let parameterSets = @[
-      (a, one, B(outer: a.outer, kind: one, str1: a.str1)),
-      (a, two, B(outer: a.outer, kind: two, str2: a.str2))
-    ]
-    proc map(x: A, myKind: Kind): B {.mapVariant: "myKind".} = discard
-
-    for parameterSet in parameterSets:  
-      let a = parameterSet[0]
-      let kind: Kind = parameterSet[1]
-      
-      # When
-      let result: B = map(a, kind)
-      
-      # Then
-      let expected: B = parameterSet[2]
-      check result == expected
-      
-      
-      
+suite "Testing mapVariant - Assignment special case - manual assignments":
   test """
     2. GIVEN a type A and an object variant B that don't share some fields
     WHEN an instance of A is mapped to an instance of B with one of the fields receiving a constant value
@@ -461,12 +417,13 @@ suite "Testing mapVariant - Assignment special case":
     type B = object
       case kind: Kind
       of one: 
-        myStr: string
+        str1: string
       of two:
-        str2: string
-
-    proc map(x: A, myKind: Kind = Kind.one): B {.mapVariant: "myKind".} =
-      result.myStr = "someStr"
+        myStr2: string
+    
+    proc x(): string = "Lala"
+    proc map(x: A, myKind: Kind = Kind.two): B {.mapVariant: "myKind".} =
+      result.myStr2 = "someStr"
 
     let a = A(str1: "str", str2: "str")
     
@@ -474,6 +431,53 @@ suite "Testing mapVariant - Assignment special case":
     let result: B = map(a)
     
     # Then
-    let expected = B(kind: one, myStr: "someStr")
+    let expected = B(kind: two, myStr2: "someStr")
     
     check result == expected
+
+when not defined(mapsterValidateVariant):
+  suite "Testing mapVariant - Assignment special case - missing assignments":
+    test """
+      1. GIVEN a type A and an object variant B where every variant of B does not share all fields with A
+      WHEN an instance of A is mapped to an instance of a specific variant of B
+      THEN it should create an instance of B of that variant where fields that do not map remain with default initialized values
+    """:
+      
+      # Given
+      type A = object
+        outer: string
+        str1: string
+        str2: string
+      
+      type Kind = enum
+        one, two
+        
+      type B = object
+        outer: string
+        case kind: Kind
+        of one: 
+          str1: string
+          notMap1: float
+        of two:
+          str2: string
+          notMap2: int
+
+      let a = A(outer: "outer", str1: "str1", str2: "str2")
+      let parameterSets = @[
+        (a, one, B(outer: a.outer, kind: one, str1: a.str1)),
+        (a, two, B(outer: a.outer, kind: two, str2: a.str2))
+      ]
+      proc map(x: A, myKind: Kind): B {.mapVariant: "myKind".} = discard
+
+      for parameterSet in parameterSets:  
+        let a = parameterSet[0]
+        let kind: Kind = parameterSet[1]
+        
+        # When
+        let result: B = map(a, kind)
+        
+        # Then
+        let expected: B = parameterSet[2]
+        check result == expected
+        
+        
