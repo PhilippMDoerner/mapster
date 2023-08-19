@@ -204,9 +204,8 @@ proc getNodesOfKind*(procBody: NimNode, nodeKind: NimNodeKind): seq[NimNode] =
 proc getAssignedFields*(procBody: NimNode): seq[string] =
   ## Takes in a Node which represents the proc-body of a
   ## mapping function, which may contain user-defined assignments to fields on the result-type.
-  ## Returns a seq of all fields that get assigned to in this proc-body.  
-  # TODO: Write proc that gets all assignment nodes
-  # Filter all assignment nodes down to those that have "result" as a symNode
+  ## Returns a seq of all fields of the result that get assigned to in this proc-body.  
+
   let assignmentNodes: seq[NimNode] = if procBody.kind == nnkAsgn:
       @[procBody]
     else: 
