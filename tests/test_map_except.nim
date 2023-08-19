@@ -9,197 +9,200 @@ import std/[times]
 type Dummy = object
 type DummyRef = ref object
 
-suite "Testing mapExcept - Assignment ignores between tuples, objects and ref objects":
-  ## All tests of `test_map` apply by virtue of sharing an underlying implementation
+when not defined(mapsterValidate):
+  ## This test-suite will fail with validation on, as to test
+  ## that a single-assignment does not happen means a field does not
+  ## get assigned to.
+  
+  suite "Testing mapExcept - Assignment ignores between tuples, objects and ref objects":
+    ## All tests of `test_map` apply by virtue of sharing an underlying implementation
+    test """
+      GIVEN an object type A and B that share all fields 
+      WHEN an instance of A is mapped to an instance of B, but excepted for auto-mapping
+      THEN it should create an instance of B with all fields auto instantiated
+    """:
+      # Given
+      type A = object
+        str: string
+        num: int
+        floatNum: float
+        dateTime: DateTime
+        boolean: bool
+        obj: Dummy
+        objRef: DummyRef
+      
+      type B = object
+        str: string
+        num: int
+        floatNum: float
+        dateTime: DateTime
+        boolean: bool
+        obj: Dummy
+        objRef: DummyRef
+        
+      let parameterSets = @[
+        ("str", 5, 2.5, now(), true, Dummy(), DummyRef()),
+        ("longer string for testing purposes only this time I promise", 5, 2.5, now(), true, Dummy(), DummyRef()),
+        ("", 5, 2.5, now(), true, Dummy(), DummyRef()),
+        ("str", 0, 2.5, now(), true, Dummy(), DummyRef()),
+        ("str", -5, 2.5, now(), true, Dummy(), DummyRef()),
+        ("str", 5, -2.5, now(), true, Dummy(), DummyRef()),
+        ("str", 5, 2.5, now(), false, Dummy(), DummyRef()),
+        ("str", 5, 2.5, now(), true, Dummy(), nil),
+      ]
+      proc map(x: A): B {.mapExcept: "x".} = discard
 
-  test """
-    GIVEN an object type A and B that share all fields 
-    WHEN an instance of A is mapped to an instance of B, but excepted for auto-mapping
-    THEN it should create an instance of B with all fields auto instantiated
-  """:
-    # Given
-    type A = object
-      str: string
-      num: int
-      floatNum: float
-      dateTime: DateTime
-      boolean: bool
-      obj: Dummy
-      objRef: DummyRef
-    
-    type B = object
-      str: string
-      num: int
-      floatNum: float
-      dateTime: DateTime
-      boolean: bool
-      obj: Dummy
-      objRef: DummyRef
-      
-    let parameterSets = @[
-      ("str", 5, 2.5, now(), true, Dummy(), DummyRef()),
-      ("longer string for testing purposes only this time I promise", 5, 2.5, now(), true, Dummy(), DummyRef()),
-      ("", 5, 2.5, now(), true, Dummy(), DummyRef()),
-      ("str", 0, 2.5, now(), true, Dummy(), DummyRef()),
-      ("str", -5, 2.5, now(), true, Dummy(), DummyRef()),
-      ("str", 5, -2.5, now(), true, Dummy(), DummyRef()),
-      ("str", 5, 2.5, now(), false, Dummy(), DummyRef()),
-      ("str", 5, 2.5, now(), true, Dummy(), nil),
-    ]
-    proc map(x: A): B {.mapExcept: "x".} = discard
+      for parameterSet in parameterSets:  
+        let a = A(
+          str: parameterSet[0],
+          num: parameterSet[1],
+          floatNum: parameterSet[2],
+          dateTime: parameterSet[3],
+          boolean: parameterSet[4],
+          obj: parameterSet[5],
+          objRef: parameterSet[6]
+        )
+        
+        # When
+        let result: B = map(a)
+        
+        # Then
+        let expected = B(
+          str: "",
+          num: 0,
+          floatNum: 0.0,
+          boolean: false,
+          obj: Dummy(),
+          objRef: nil
+        )
+        check result == expected
 
-    for parameterSet in parameterSets:  
-      let a = A(
-        str: parameterSet[0],
-        num: parameterSet[1],
-        floatNum: parameterSet[2],
-        dateTime: parameterSet[3],
-        boolean: parameterSet[4],
-        obj: parameterSet[5],
-        objRef: parameterSet[6]
-      )
+    test """
+      GIVEN tuple type A and object type B that share all fields 
+      WHEN an instance of A is mapped to an instance of B, but excepted for auto-mapping
+      THEN it should create an instance of B with all fields auto instantiated
+    """:
+      # Given
+      type A = tuple
+        str: string
+        num: int
+        floatNum: float
+        dateTime: DateTime
+        boolean: bool
+        obj: Dummy
+        objRef: DummyRef
       
-      # When
-      let result: B = map(a)
-      
-      # Then
-      let expected = B(
-        str: "",
-        num: 0,
-        floatNum: 0.0,
-        boolean: false,
-        obj: Dummy(),
-        objRef: nil
-      )
-      
-      check result == expected
+      type B = object
+        str: string
+        num: int
+        floatNum: float
+        dateTime: DateTime
+        boolean: bool
+        obj: Dummy
+        objRef: DummyRef
+        
+      let parameterSets = @[
+        ("str", 5, 2.5, now(), true, Dummy(), DummyRef()),
+        ("longer string for testing purposes only this time I promise", 5, 2.5, now(), true, Dummy(), DummyRef()),
+        ("", 5, 2.5, now(), true, Dummy(), DummyRef()),
+        ("str", 0, 2.5, now(), true, Dummy(), DummyRef()),
+        ("str", -5, 2.5, now(), true, Dummy(), DummyRef()),
+        ("str", 5, -2.5, now(), true, Dummy(), DummyRef()),
+        ("str", 5, 2.5, now(), false, Dummy(), DummyRef()),
+        ("str", 5, 2.5, now(), true, Dummy(), nil),
+      ]
+      proc map(x: A): B {.mapExcept: "x".} = discard
 
-  test """
-    GIVEN tuple type A and object type B that share all fields 
-    WHEN an instance of A is mapped to an instance of B, but excepted for auto-mapping
-    THEN it should create an instance of B with all fields auto instantiated
-  """:
-    # Given
-    type A = tuple
-      str: string
-      num: int
-      floatNum: float
-      dateTime: DateTime
-      boolean: bool
-      obj: Dummy
-      objRef: DummyRef
-    
-    type B = object
-      str: string
-      num: int
-      floatNum: float
-      dateTime: DateTime
-      boolean: bool
-      obj: Dummy
-      objRef: DummyRef
-      
-    let parameterSets = @[
-      ("str", 5, 2.5, now(), true, Dummy(), DummyRef()),
-      ("longer string for testing purposes only this time I promise", 5, 2.5, now(), true, Dummy(), DummyRef()),
-      ("", 5, 2.5, now(), true, Dummy(), DummyRef()),
-      ("str", 0, 2.5, now(), true, Dummy(), DummyRef()),
-      ("str", -5, 2.5, now(), true, Dummy(), DummyRef()),
-      ("str", 5, -2.5, now(), true, Dummy(), DummyRef()),
-      ("str", 5, 2.5, now(), false, Dummy(), DummyRef()),
-      ("str", 5, 2.5, now(), true, Dummy(), nil),
-    ]
-    proc map(x: A): B {.mapExcept: "x".} = discard
-
-    for parameterSet in parameterSets:  
-      let a = (
-        str: parameterSet[0],
-        num: parameterSet[1],
-        floatNum: parameterSet[2],
-        dateTime: parameterSet[3],
-        boolean: parameterSet[4],
-        obj: parameterSet[5],
-        objRef: parameterSet[6]
-      )
-      
-      # When
-      let result: B = map(a)
-      
-      # Then
-      let expected = B(
-        str: "",
-        num: 0,
-        floatNum: 0.0,
-        boolean: false,
-        obj: Dummy(),
-        objRef: nil
-      )
-      
-      check result == expected
-      
-      
+      for parameterSet in parameterSets:  
+        let a = (
+          str: parameterSet[0],
+          num: parameterSet[1],
+          floatNum: parameterSet[2],
+          dateTime: parameterSet[3],
+          boolean: parameterSet[4],
+          obj: parameterSet[5],
+          objRef: parameterSet[6]
+        )
+        
+        # When
+        let result: B = map(a)
+        
+        # Then
+        let expected = B(
+          str: "",
+          num: 0,
+          floatNum: 0.0,
+          boolean: false,
+          obj: Dummy(),
+          objRef: nil
+        )
+        
+        check result == expected
+        
+        
 
 
-  test """
-    GIVEN ref object type A and object type B that share all fields 
-    WHEN an instance of A is mapped to an instance of B, but excepted for auto-mapping
-    THEN it should create an instance of B with all fields auto instantiated
-  """:
-    # Given
-    type A = ref object
-      str: string
-      num: int
-      floatNum: float
-      dateTime: DateTime
-      boolean: bool
-      obj: Dummy
-      objRef: DummyRef
-    
-    type B = object
-      str: string
-      num: int
-      floatNum: float
-      dateTime: DateTime
-      boolean: bool
-      obj: Dummy
-      objRef: DummyRef
+    test """
+      GIVEN ref object type A and object type B that share all fields 
+      WHEN an instance of A is mapped to an instance of B, but excepted for auto-mapping
+      THEN it should create an instance of B with all fields auto instantiated
+    """:
+      # Given
+      type A = ref object
+        str: string
+        num: int
+        floatNum: float
+        dateTime: DateTime
+        boolean: bool
+        obj: Dummy
+        objRef: DummyRef
       
-    let parameterSets = @[
-      ("str", 5, 2.5, now(), true, Dummy(), DummyRef()),
-      ("longer string for testing purposes only this time I promise", 5, 2.5, now(), true, Dummy(), DummyRef()),
-      ("", 5, 2.5, now(), true, Dummy(), DummyRef()),
-      ("str", 0, 2.5, now(), true, Dummy(), DummyRef()),
-      ("str", -5, 2.5, now(), true, Dummy(), DummyRef()),
-      ("str", 5, -2.5, now(), true, Dummy(), DummyRef()),
-      ("str", 5, 2.5, now(), false, Dummy(), DummyRef()),
-      ("str", 5, 2.5, now(), true, Dummy(), nil),
-    ]
-    proc map(x: A): B {.mapExcept: "x".} = discard
+      type B = object
+        str: string
+        num: int
+        floatNum: float
+        dateTime: DateTime
+        boolean: bool
+        obj: Dummy
+        objRef: DummyRef
+        
+      let parameterSets = @[
+        ("str", 5, 2.5, now(), true, Dummy(), DummyRef()),
+        ("longer string for testing purposes only this time I promise", 5, 2.5, now(), true, Dummy(), DummyRef()),
+        ("", 5, 2.5, now(), true, Dummy(), DummyRef()),
+        ("str", 0, 2.5, now(), true, Dummy(), DummyRef()),
+        ("str", -5, 2.5, now(), true, Dummy(), DummyRef()),
+        ("str", 5, -2.5, now(), true, Dummy(), DummyRef()),
+        ("str", 5, 2.5, now(), false, Dummy(), DummyRef()),
+        ("str", 5, 2.5, now(), true, Dummy(), nil),
+      ]
+      proc map(x: A): B {.mapExcept: "x".} = discard
 
-    for parameterSet in parameterSets:  
-      let a = A(
-        str: parameterSet[0],
-        num: parameterSet[1],
-        floatNum: parameterSet[2],
-        dateTime: parameterSet[3],
-        boolean: parameterSet[4],
-        obj: parameterSet[5],
-        objRef: parameterSet[6]
-      )
-      
-      # When
-      let result: B = map(a)
-      
-      # Then
-      let expected = B(
-        str: "",
-        num: 0,
-        floatNum: 0.0,
-        boolean: false,
-        obj: Dummy(),
-        objRef: nil
-      )
-      
-      check result == expected
+      for parameterSet in parameterSets:  
+        let a = A(
+          str: parameterSet[0],
+          num: parameterSet[1],
+          floatNum: parameterSet[2],
+          dateTime: parameterSet[3],
+          boolean: parameterSet[4],
+          obj: parameterSet[5],
+          objRef: parameterSet[6]
+        )
+        
+        # When
+        let result: B = map(a)
+        
+        # Then
+        let expected = B(
+          str: "",
+          num: 0,
+          floatNum: 0.0,
+          boolean: false,
+          obj: Dummy(),
+          objRef: nil
+        )
+        
+        check result == expected
 
 suite "Testing mapExcept - Test Multi Param Ignoring":
   test """
