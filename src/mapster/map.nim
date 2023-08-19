@@ -1,4 +1,4 @@
-import std/[macros, sequtils, sugar]
+import std/[macros, sequtils, sets, strformat, logging]
 import ./utils
 
 proc mapTo*(source: auto, target: var auto) =
@@ -22,31 +22,9 @@ proc generateMapCall(variableName: string, resultTypeName: string): NimNode =
     newIdentNode("result")
   )
 
-proc isTypeWithFields(typSymbol: NimNode): bool =
-  let isSymbol = typSymbol.kind == nnkSym
-  if not isSymbol:
-    return false
-  
-  let typeDef = typSymbol.getImpl()
-  let isSomethingWeird = typeDef.kind == nnkNilLit
-  if isSomethingWeird:
-    return false
-  
-  assertKind(typeDef, nnkTypeDef)
-
-  let typeKind = typeDef[2].kind
-  
-  let isObjectOrTuple = typeKind in [nnkObjectTy, nnkTupleTy]
-  if isObjectOrTuple:
-    return true
-  
-  let isRefType = typeKind == nnkRefTy
-  if isRefType:
-    let refTypeKind = typeDef[2][0].kind
-    let isRefObjectOrRefTuple = refTypeKind in [nnkObjectTy, nnkTupleTy]
-    return isRefObjectOrRefTuple
-  
-  return false
+proc validateProcDef(procDef: NimNode, paramsToIgnore: openArray[string] = @[]) =
+  ## Checks that all fields on the result-type has values being assigned to
+  validateFieldAssignments(procDef, paramsToIgnore)
 
 proc isObjectType(typSymbol: NimNode): bool =
   assertKind(typSymbol, nnkSym)
@@ -129,10 +107,15 @@ proc createMapProc(procDef: NimNode, paramsToIgnore: varargs[string] = @[]): Nim
   debugProcNode newProc
   return newProc
 
-macro map*(procDef: typed): untyped =
-  expectKind(procDef, nnkProcDef, "Annotated line is not a proc definition!\nYou may only use map as a pragma to annotate a proc definition!")
-  return createMapProc(procDef)
-
 macro mapExcept*(exclude: varargs[string], procDef: typed): untyped =
   let exclusions: seq[string] = exclude.mapIt($it) # For some reason exclude gets turned into NimNode, this turns that back
+  when defined(mapsterValidate):
+    validateProcDef(procDef, exclusions)
   return createMapProc(procDef, exclusions)
+
+macro map*(procDef: typed): untyped =
+  expectKind(procDef, nnkProcDef, "Annotated line is not a proc definition!\nYou may only use map as a pragma to annotate a proc definition!")
+  when defined(mapsterValidate):
+    validateProcDef(procDef)
+  return createMapProc(procDef)
+

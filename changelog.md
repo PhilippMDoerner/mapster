@@ -7,6 +7,12 @@
 -   [t]—test suite improvement
 -   [d]—docs improvement
 
+## 1.0.0 (August 19, 2023)
+- [+] Add compile-time validation of assignments
+- [r] Unify more operations between object variant and normal mapping into utils.nim
+- [!] rename private packages to "map.nim" and "mapVariant".nim
+- [t] Moved to testament to be able to test compile-time validation
+
 ## 0.2.0 (August 13, 2023)
 - [+] Add mapping of object variants
 - [r] Improve error messages for wrong useage
