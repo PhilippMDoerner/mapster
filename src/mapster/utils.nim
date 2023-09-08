@@ -130,6 +130,7 @@ proc getFieldName(assignment: NimNode): string =
     assertKind(assignedFieldSymbol, nnkSym)
     
     return $assignedFieldSymbol
+  
   else:
     error(fmt"""
       Could not get field name for assignment to object variant.
@@ -245,7 +246,7 @@ proc getAssignedFields*(procBody: NimNode): seq[string] =
 
 proc getParameterFields*(paramNode: NimNode, paramsToIgnore: openArray[string] = @[]): HashSet[string] =
   ## Takes in a nnkFormalParams Node which represents all parameters and the result-type of a proc definition.
-  ## Returns a set of all fields on all proc parameters that are available field.
+  ## Returns a set of all fields on all proc parameters that are available with the exception of object variants.
   assertKind(paramNode, nnkFormalParams)
   
   let params: seq[NimNode] = paramNode.getParameters()
@@ -256,7 +257,7 @@ proc getParameterFields*(paramNode: NimNode, paramsToIgnore: openArray[string] =
       continue
     
     let typeSym: NimNode = param[1]
-    if not isTypeWithFields(typeSym):
+    if not isTypeWithFields(typeSym) or isObjectVariant(typeSym):
       continue
     
     assertKind(typeSym, nnkSym)
@@ -365,4 +366,5 @@ proc validateFieldAssignments*(procDef: NimNode, paramsToIgnore: openArray[strin
         '{resultTypeStr}.{targetField}' is never assigned a value! 
         There is no field on a parameter that could map to '{targetField}'
         nor is there a manual assignment in the proc-body to this field!
+        Note that fields from object variants are never auto-assigned to an object.
       """)
