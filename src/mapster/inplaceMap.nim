@@ -3,6 +3,14 @@ import ./utils
 
 proc merge*(target: var auto, source: auto) =
   ## Copies all values of fields from source to target where the field name and type match.
+  when source is ref:
+    if source.isNil:
+      raise newException(ValueError, fmt"Tried to inplacemap values from 'nil' of type {$source.type()}")
+  
+  when target is ref:
+    if target.isNil:
+      raise newException(ValueError, fmt"Tried to inplacemap to 'nil' type {$source.type()}")
+  
   for sourceName, sourceField in source.getIterator():
     for targetName, targetField in target.getIterator():
       when sourceName.eqIdent(targetName) and sourceField is typeof(targetField):
