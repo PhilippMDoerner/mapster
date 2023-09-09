@@ -652,7 +652,7 @@ suite "Testing map - Assignment special cases in general":
       
       
   test """
-    3. GIVEN an object type A and B that don't share some fields
+    2. GIVEN an object type A and B that don't share some fields
     WHEN an instance of A is mapped to an instance of B with one of the fields receiving a constant value
     THEN it should create an instance of B with all fields having the value of their name counterparts from A ecept for the field with the constant value
   """:
@@ -691,7 +691,7 @@ suite "Testing map - Assignment special cases in general":
       
       
   test """
-    4. GIVEN an object type A and B that don't share some fields
+    3. GIVEN an object type A and B that don't share some fields
     WHEN an instance of A is mapped to an instance of B with one of the fields receiving a value from a proc calculation
     THEN it should create an instance of B with all fields having the value of their name counterparts from A except for the field with the proc calculation
   """:
@@ -732,7 +732,7 @@ suite "Testing map - Assignment special cases in general":
   
   
   test """
-    5. GIVEN an object type A, B and C that share some of their fields with D
+    4. GIVEN an object type A, B and C that share some of their fields with D
     WHEN an instance of A,B and C are mapped to an instance of D 
     THEN it should create an instance of D with all fields having the value of their name counterparts from A,B and C
   """:
@@ -772,7 +772,7 @@ suite "Testing map - Assignment special cases in general":
     
     
   test """
-    6. GIVEN an object type A, B and C that all have the same field "str"
+    5. GIVEN an object type A, B and C that all have the same field "str"
     WHEN an instance of A and B mapped to an instance of C
     THEN it should create an instance of C with the "str" value of the last parameter
   """:
@@ -806,7 +806,7 @@ suite "Testing map - Assignment special cases in general":
 
 
   test """
-    7. GIVEN an object type A and B
+    6. GIVEN an object type A and B
     WHEN an instance of A is mapped to an instance of B together with a non-object kind parameter
     THEN it should create an instance of B with only the fields of A transferred to B
   """:
@@ -831,7 +831,7 @@ suite "Testing map - Assignment special cases in general":
 
 
   test """
-    8. GIVEN an object type A and B
+    7. GIVEN an object type A and B
     WHEN an instance of A is mapped to an instance of B together with a non-object kind parameter with an assignment that makes use of the parameter
     THEN it should create an instance of B with only the fields of A transferred to B
   """:
@@ -856,7 +856,7 @@ suite "Testing map - Assignment special cases in general":
     check result == expected
 
   test """
-    9. GIVEN an object type A and B that share fields that only match due to case insensitivity and underscore insensitivity
+    8. GIVEN an object type A and B that share fields that only match due to case insensitivity and underscore insensitivity
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
@@ -894,7 +894,7 @@ suite "Testing map - Assignment special cases in general":
       
 
   test """
-    10. GIVEN an object type A and B that share fields that only match due to case insensitivity and underscore insensitivity
+    9. GIVEN an object type A and B that share fields that only match due to case insensitivity and underscore insensitivity
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
@@ -932,7 +932,7 @@ suite "Testing map - Assignment special cases in general":
 
 
   test """
-    11. GIVEN an object variant A and an object type B that share some fields on the instance 
+    10. GIVEN an object variant A and an object type B that share some fields on the instance 
     WHEN an instance of A is mapped to an instance of B with a proc-body with if & case statements
     THEN it should create an instance of B with the values assigned to it
     NOTE: This also should always pass validation as it should be able to check for assignment behind complex statements 
@@ -981,7 +981,7 @@ suite "Testing map - Assignment special cases in general":
     
     
   test """
-    12. GIVEN an object variant type A and an object type B that share some fields on the instance 
+    11. GIVEN an object variant type A and an object type B that share some fields on the instance 
     WHEN 2 instances of A of different variant kinds are mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
@@ -1020,7 +1020,7 @@ suite "Testing map - Assignment special cases in general":
 
     
   test """
-    13. GIVEN an object type A and B that require complex logic to map one to the other 
+    12. GIVEN an object type A and B that require complex logic to map one to the other 
     WHEN an instance of A is mapped to an instance of B
     THEN it should create an instance of B with all fields having the value of their name counterparts from A
   """:
