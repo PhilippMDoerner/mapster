@@ -11,7 +11,7 @@ proc mapTo*(source: auto, target: var auto) =
       when sourceName.eqIdent(targetName) and sourceField is typeof(targetField):
         targetField = sourceField
 
-proc generateMapCall(variableName: string, resultTypeName: string): NimNode =
+proc generateMapCall(variableName: string): NimNode =
   ## generates `<variableName>.mapTo(result)
   
   return newCall(
@@ -77,7 +77,7 @@ proc toMapProcBody(procBody: NimNode, parameterNode: NimNode, paramsToIgnore: va
   
   let mapCalls: seq[NimNode] = paramNamesWithFields
     .filterIt(it notin paramsToIgnore)
-    .mapIt(generateMapCall(it, resultTypeName))
+    .mapIt(generateMapCall(it))
 
   var newProcBody: NimNode = newStmtList()
   if resultIsObject:
