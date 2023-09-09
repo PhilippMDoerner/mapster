@@ -58,7 +58,7 @@ proc generateResultInitialization(resultType: string): NimNode =
 proc toMapProcBody(procBody: NimNode, parameterNode: NimNode, paramsToIgnore: varargs[string]): NimNode =
   ## Generates a procBody NimNode of the following shape:
   ##   result = A()
-  ##   (For each object type parameter):
+  ##   (For each parameter of a type with fields):
   ##      <parameterName>.mapTo(result)
   ##   (For end)
   ##   <oldProcBody>
