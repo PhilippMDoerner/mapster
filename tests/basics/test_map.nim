@@ -932,7 +932,7 @@ suite "Testing map - Assignment special cases in general":
 
 
   test """
-    10. GIVEN an object variant A and an object type B that share some fields on the instance 
+    10. GIVEN an object type A and an object type B that share some fields on the instance 
     WHEN an instance of A is mapped to an instance of B with a proc-body with if & case statements
     THEN it should create an instance of B with the values assigned to it
     NOTE: This also should always pass validation as it should be able to check for assignment behind complex statements 
@@ -978,88 +978,45 @@ suite "Testing map - Assignment special cases in general":
     check result1 == expected1
     check result2 == expected2
     check result3 == expected3
-    
-    
-  test """
-    11. GIVEN an object variant type A and an object type B that share some fields on the instance 
-    WHEN 2 instances of A of different variant kinds are mapped to an instance of B
-    THEN it should create an instance of B with all fields having the value of their name counterparts from A
-  """:
-    # Given
-    type Kind = enum
-      str, num
-    type A = object
-      case kind: Kind
-      of str: str: string
-      of num: num: int
+  
 
-    type B = object
-      kind: Kind
-      str: string
-      num: int
+    test """
+      11. GIVEN an object variant type A and object type B where B shares its permanent fields with A
+      WHEN an instance of A is mapped to an instance of B
+      THEN it should create an instance of B with all fields having the value of their name counterparts from A
+    """:
+      # Given
+      type Kind = enum
+        str, num
+      type A = object
+        permanent: int
+        case kind: Kind
+        of str: str: string
+        of num: num: int
 
-    proc map(x: A, y: A): B {.map.} = discard
-    
-    let a1 = A(
-      kind: str,
-      str: "str"
-    )
-    
-    let a2 = A(
-      kind: num,
-      num: 5
-    )
-    
-    # When
-    let result: B = map(a1, a2)
-    
-    # Then
-    let expected = B(kind: num, str: "str", num: 5)
-    
-    check result == expected
+      type B = object
+        kind: Kind
+        permanent: int
 
-    
-  test """
-    12. GIVEN an object type A and B that require complex logic to map one to the other 
-    WHEN an instance of A is mapped to an instance of B
-    THEN it should create an instance of B with all fields having the value of their name counterparts from A
-  """:
-    # Given
-    type Kind = enum
-      str, num
-    type A = object
-      case kind: Kind
-      of str: str: string
-      of num: num: int
+      proc map(x: A): B {.map.} = discard
+      
+      let a = A(
+        permanent: 10,
+        kind: str,
+        str: "str"
+      )
+      
+      # When
+      let result: B = map(a)
+      
+      # Then
+      let expected = B(kind: str, permanent: 10)
+      
+      check result == expected
 
-    type B = object
-      kind: Kind
-      str: string
-      num: int
-
-    proc map(x: A, y: A): B {.map.} = discard
-    
-    let a1 = A(
-      kind: str,
-      str: "str"
-    )
-    
-    let a2 = A(
-      kind: num,
-      num: 5
-    )
-    
-    # When
-    let result: B = map(a1, a2)
-    
-    # Then
-    let expected = B(kind: num, str: "str", num: 5)
-    
-    check result == expected
-    
 
 when not defined(mapsterValidate):
-  suite "Testing map - Assignment special cases with no field assignments and no validation":
+  suite "Testing map - Assignment special cases with no field assignments and no validation as validation would break these cases":
     test """
       1. GIVEN an object type A and B where not every field of B can be mapped to a field on A 
       WHEN an instance of A is mapped to an instance of B
@@ -1112,5 +1069,83 @@ when not defined(mapsterValidate):
         )
         
         check result == expected
+      
+      
+      
+    test """
+      2. GIVEN an object variant type A and an object type B that share some fields on the instance 
+      WHEN 2 instances of A of different variant kinds are mapped to an instance of B
+      THEN it should create an instance of B with all fields having the value of their name counterparts from A
+    """:
+      # Given
+      type Kind = enum
+        str, num
+      type A = object
+        case kind: Kind
+        of str: str: string
+        of num: num: int
 
-## TODO: Write a test that has assignments with if-statements based on incoming parameters
+      type B = object
+        kind: Kind
+        str: string
+        num: int
+
+      proc map(x: A, y: A): B {.map.} = discard
+      
+      let a1 = A(
+        kind: str,
+        str: "str"
+      )
+      
+      let a2 = A(
+        kind: num,
+        num: 5
+      )
+      
+      # When
+      let result: B = map(a1, a2)
+      
+      # Then
+      let expected = B(kind: num, str: "str", num: 5)
+      
+      check result == expected
+  
+    
+    
+    test """
+      3. GIVEN an object type A and B that require complex logic to map one to the other 
+      WHEN an instance of A is mapped to an instance of B
+      THEN it should create an instance of B with all fields having the value of their name counterparts from A
+    """:
+      # Given
+      type Kind = enum
+        str, num
+      type A = object
+        case kind: Kind
+        of str: str: string
+        of num: num: int
+
+      type B = object
+        kind: Kind
+        str: string
+        num: int
+
+      proc map(x: A, y: A): B {.map.} = discard
+      
+      let a1 = A(
+        kind: str,
+        str: "str"
+      )
+      
+      let a2 = A(
+        kind: num,
+        num: 5
+      )
+      
+      # When
+      let result: B = map(a1, a2)
+      
+      # Then
+      let expected = B(kind: num, str: "str", num: 5)
+      
+      check result == expected
