@@ -5,7 +5,7 @@ proc mapTo*(source: auto, target: var auto) =
   when source is ref:
     if source.isNil:
       raise newException(ValueError, fmt"Tried to map with 'nil' of type {$source.type()}")
-    
+
   for sourceName, sourceField in source.getIterator():
     for targetName, targetField in target.getIterator():
       when sourceName.eqIdent(targetName) and sourceField is typeof(targetField):

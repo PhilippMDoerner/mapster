@@ -108,7 +108,7 @@ proc getFieldName(assignment: NimNode): string =
     assertKind(assignedFieldSymbol, nnkSym)
     
     return $assignedFieldSymbol
-  
+
   else:
     error(fmt"""
       Could not get field name for assignment to object variant.
@@ -166,7 +166,7 @@ proc getFieldsOfObjectType*(typeSym: NimNode): HashSet[string] =
     for name in idents.names:
       let nameNode = name.NimNode
       result.incl($nameNode)
-    
+
 proc getFieldsOfTupleType(tupleTy: NimNode): HashSet[string] =
   ## Takes in a nnkSym Node which represents a type-definition of a tuple type. 
   ## Returns a Set of all field names the tuple-type has.
@@ -251,6 +251,7 @@ proc getParameterFields*(paramNode: NimNode, paramsToIgnore: openArray[string] =
   ## Takes in a nnkFormalParams Node which represents all parameters and the result-type of a proc definition.
   ## Returns a set of all fields on all proc parameters that are available.
   ## For object variants, all fields that are only available for specific variant-kinds are not counted for this purpose.
+
   assertKind(paramNode, nnkFormalParams)
   
   let params: seq[NimNode] = paramNode.getParameters()
@@ -272,6 +273,7 @@ proc getParameterFields*(paramNode: NimNode, paramsToIgnore: openArray[string] =
       result.incl(permanentFields)
     else:
       result.incl(typeFields)
+
     
 proc getResultType*(parametersNode: NimNode): NimNode =
   ## Takes in a nnkFormalParams Node containing all parameters and the result-type of a proc definition.
