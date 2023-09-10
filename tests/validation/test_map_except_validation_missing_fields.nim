@@ -1,7 +1,7 @@
 discard """
   action: "reject"
   matrix: "--define:mapsterValidate"
-  errorMsg: "'B.str' is never assigned a value!"
+  errorMsg: "'B.str' is not always assigned a value!"
   file: "utils.nim"
 """
 
