@@ -23,30 +23,6 @@ proc expectKind*(node: NimNode, kind: NimNodeKind, msg: string) =
     let errorMsg = boldCode & msg & "\n" & msgEnd
     error(errorMsg)
 
-proc isObjectVariant*(typSymbol: NimNode): bool =
-  ## Takes a nnkSym node and checks if it is of a type-definition
-  ## that is of an object variant.
-  typSymbol.assertKind(nnkSym)
-  let typeDef: NimNode = typSymbol.getImpl()
-  typeDef.assertKind(nnkTypeDef)
-  
-  let typeNode: NimNode = typeDef[2]
-  let isRefType = typeNode.kind == nnkRefTy
-  let objectType = if isRefType: typeNode[0] else: typeNode
-  let isObjectType = objectType.kind == nnkObjectTy
-  if not isObjectType:
-    return false
-  
-  let fieldList: NimNode = objectType[2]
-  assertKind(fieldList, nnkRecList)
-  
-  for field in fieldList:
-    let isDiscriminatorSection = field.kind == nnkRecCase
-    if isDiscriminatorSection:
-      return true
-
-  return false
-
 proc isTypeWithFields*(typSymbol: NimNode): bool =
   ## Takes a nnkSym Node and checks if it is of a type-definition
   ## that has fields, such as objects, ref objects or tuples. 
@@ -218,13 +194,22 @@ proc getFieldsOfType*(sym: NimNode): HashSet[string] =
 
 proc getNodesOfKind*(procBody: NimNode, nodeKind: NimNodeKind): seq[NimNode] =
   for node in procBody.children:
-    let isAssignmentNode = node.kind == nodeKind
-    if isAssignmentNode:
+    let isDesiredNode = node.kind == nodeKind
+    if isDesiredNode:
       result.add(node)
     else:
-      let assignments: seq[NimNode] = getNodesOfKind(node, nnkAsgn)
-      result.add(assignments)
+      let desiredChildNodes: seq[NimNode] = getNodesOfKind(node, nodeKind)
+      result.add(desiredChildNodes)
 
+proc isObjectVariant*(typSymbol: NimNode): bool =
+  ## Takes a nnkSym node and checks if it is of a type-definition
+  ## that is of an object variant.
+  typSymbol.assertKind(nnkSym)
+  let typeDef: NimNode = typSymbol.getImpl()
+  typeDef.assertKind(nnkTypeDef)
+  
+  let hasCaseStatement = typeDef.getNodesOfKind(nnkRecCase).len() > 0
+  return hasCaseStatement
 
 proc getAssignedFields*(procBody: NimNode): seq[string] =
   ## Takes in a Node which represents the proc-body of a
