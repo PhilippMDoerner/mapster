@@ -1,6 +1,3 @@
-discard """
-  matrix: "; -d:mapsterValidate"
-""" 
 import ../../src/mapster
 import std/[unittest, times]
 
@@ -8,11 +5,11 @@ type Dummy = object
 
 type DummyRef = ref object
 
-suite "Testing map - Assignment between tuple, object and ref object (3x3 test matrix)":
+suite "Testing inplaceMap - Assignment between tuple, object and ref object (3x3 test matrix)":
   test """
     1. GIVEN an object type A and B that share all fields 
-    WHEN an instance of A is mapped to an instance of B
-    THEN it should create an instance of B with all fields having the value of their name counterparts from A
+    WHEN an instance of B is inplaceMapped with an instance of A
+    THEN it should transfer the value of all fields from A to B
   """:
     # Given
     type A = object
@@ -43,7 +40,8 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
       ("str", 5, 2.5, now(), false, Dummy(), DummyRef()),
       ("str", 5, 2.5, now(), true, Dummy(), nil),
     ]
-    proc map(x: A): B {.map.} = discard
+    
+    proc mergeWith(x: var B, y: A) {.inplaceMap.} = discard
 
     for parameterSet in parameterSets:  
       let a = A(
@@ -55,9 +53,10 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
         obj: parameterSet[5],
         objRef: parameterSet[6]
       )
-      
+      var y: B = B()
+
       # When
-      let result: B = map(a)
+      y.mergeWith(a)
       
       # Then
       let expected = B(
@@ -70,14 +69,14 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
         objRef: parameterSet[6]
       )
       
-      check result == expected
+      check y == expected
 
 
 
   test """
     2. GIVEN a ref object type A and an object type B that share all fields 
-    WHEN an instance of A is mapped to an instance of B
-    THEN it should create an instance of B with all fields having the value of their name counterparts from A
+    WHEN an instance of B is inplaceMapped with an instance of A
+    THEN it should transfer the value of all fields from A to B
   """:
     # Given
     type A = ref object
@@ -108,7 +107,7 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
       ("str", 5, 2.5, now(), false, Dummy(), DummyRef()),
       ("str", 5, 2.5, now(), true, Dummy(), nil),
     ]
-    proc map(x: A): B {.map.} = discard
+    proc mergeWith(x: var B, y: A) {.inplaceMap.} = discard
 
     for parameterSet in parameterSets:  
       let a = A(
@@ -122,7 +121,8 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
       )
       
       # When
-      let result: B = map(a)
+      var result: B = B()
+      result.mergeWith(a)
       
       # Then
       let expected = B(
@@ -136,13 +136,12 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
       )
       
       check result == expected
-      
 
 
   test """
     3. GIVEN ref object types A and B that share all fields 
-    WHEN an instance of A is mapped to an instance of B
-    THEN it should create an instance of B with all fields having the value of their name counterparts from A
+    WHEN an instance of B is inplaceMapped with an instance of A
+    THEN it should transfer the value of all fields from A to B
   """:
     # Given
     type A = ref object
@@ -173,7 +172,7 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
       ("str", 5, 2.5, now(), false, Dummy(), DummyRef()),
       ("str", 5, 2.5, now(), true, Dummy(), nil),
     ]
-    proc map(x: A): B {.map.} = discard
+    proc mergeWith(x: var B, y: A) {.inplaceMap.} = discard
 
     for parameterSet in parameterSets:  
       let a = A(
@@ -187,8 +186,9 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
       )
       
       # When
-      let result: B = map(a)
-      
+      var result: B = B()
+      result.mergeWith(a)
+            
       # Then
       let expected = B(
         str: parameterSet[0],
@@ -205,8 +205,8 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
   
   test """
     4. GIVEN object type A and ref object type B that share all fields 
-    WHEN an instance of A is mapped to an instance of B
-    THEN it should create an instance of B with all fields having the value of their name counterparts from A
+    WHEN an instance of B is inplaceMapped with an instance of A
+    THEN it should transfer the value of all fields from A to B
   """:
     # Given
     type A = object
@@ -237,7 +237,7 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
       ("str", 5, 2.5, now(), false, Dummy(), DummyRef()),
       ("str", 5, 2.5, now(), true, Dummy(), nil),
     ]
-    proc map(x: A): B {.map.} = discard
+    proc mergeWith(x: var B, y: A) {.inplaceMap.} = discard
 
     for parameterSet in parameterSets:  
       let a = A(
@@ -251,8 +251,9 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
       )
       
       # When
-      let result: B = map(a)
-      
+      var result: B = B()
+      result.mergeWith(a)
+            
       # Then
       let expected = B(
         str: parameterSet[0],
@@ -270,8 +271,8 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
 
   test """
     5. GIVEN tuple type A and object type B that share all fields 
-    WHEN an instance of A is mapped to an instance of B
-    THEN it should create an instance of B with all fields having the value of their name counterparts from A
+    WHEN an instance of B is inplaceMapped with an instance of A
+    THEN it should transfer the value of all fields from A to B
   """:
     # Given
     type A = tuple
@@ -302,7 +303,7 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
       ("str", 5, 2.5, now(), false, Dummy(), DummyRef()),
       ("str", 5, 2.5, now(), true, Dummy(), nil),
     ]
-    proc map(x: A): B {.map.} = discard
+    proc mergeWith(x: var B, y: A) {.inplaceMap.} = discard
 
     for parameterSet in parameterSets:  
       let a: A = (
@@ -316,8 +317,9 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
       )
       
       # When
-      let result: B = map(a)
-      
+      var result: B = B()
+      result.mergeWith(a)
+
       # Then
       let expected = B(
         str: parameterSet[0],
@@ -335,8 +337,8 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
 
   test """
     6. GIVEN tuple type A and ref object type B that share all fields 
-    WHEN an instance of A is mapped to an instance of B
-    THEN it should create an instance of B with all fields having the value of their name counterparts from A
+    WHEN an instance of B is inplaceMapped with an instance of A
+    THEN it should transfer the value of all fields from A to B
   """:
     # Given
     type A = tuple
@@ -367,7 +369,7 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
       ("str", 5, 2.5, now(), false, Dummy(), DummyRef()),
       ("str", 5, 2.5, now(), true, Dummy(), nil),
     ]
-    proc map(x: A): B {.map.} = discard
+    proc mergeWith(x: var B, y: A) {.inplaceMap.} = discard
 
     for parameterSet in parameterSets:  
       let a: A = (
@@ -381,7 +383,8 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
       )
       
       # When
-      let result: B = map(a)
+      var result: B = B()
+      result.mergeWith(a)
       
       # Then
       let expected = B(
@@ -400,8 +403,8 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
 
   test """
     7. GIVEN object type A and tuple type B that share all fields 
-    WHEN an instance of A is mapped to an instance of B
-    THEN it should create an instance of B with all fields having the value of their name counterparts from A
+    WHEN an instance of B is inplaceMapped with an instance of A
+    THEN it should transfer the value of all fields from A to B
   """:
     # Given
     type A = object
@@ -432,7 +435,7 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
       ("str", 5, 2.5, now(), false, Dummy(), DummyRef()),
       ("str", 5, 2.5, now(), true, Dummy(), nil),
     ]
-    proc map(x: A): B {.map.} = discard
+    proc mergeWith(x: var B, y: A) {.inplaceMap.} = discard
 
     for parameterSet in parameterSets:  
       let a: A = A(
@@ -446,7 +449,8 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
       )
       
       # When
-      let result: B = map(a)
+      var result: B = default(B)
+      result.mergeWith(a)
       
       # Then
       let expected: B = (
@@ -465,8 +469,8 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
 
   test """
     8. GIVEN ref object A and tuple type B that share all fields 
-    WHEN an instance of A is mapped to an instance of B
-    THEN it should create an instance of B with all fields having the value of their name counterparts from A
+    WHEN an instance of B is inplaceMapped with an instance of A
+    THEN it should transfer the value of all fields from A to B
   """:
     # Given
     type A = ref object
@@ -497,7 +501,7 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
       ("str", 5, 2.5, now(), false, Dummy(), DummyRef()),
       ("str", 5, 2.5, now(), true, Dummy(), nil),
     ]
-    proc map(x: A): B {.map.} = discard
+    proc mergeWith(x: var B, y: A) {.inplaceMap.} = discard
 
     for parameterSet in parameterSets:  
       let a: A = A(
@@ -511,7 +515,8 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
       )
       
       # When
-      let result: B = map(a)
+      var result: B = default(B)
+      result.mergeWith(a)
       
       # Then
       let expected: B = (
@@ -530,8 +535,8 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
 
   test """
     9. GIVEN tuple types A and B that share all fields 
-    WHEN an instance of A is mapped to an instance of B
-    THEN it should create an instance of B with all fields having the value of their name counterparts from A
+    WHEN an instance of B is inplaceMapped with an instance of A
+    THEN it should transfer the value of all fields from A to B
   """:
     # Given
     type A = tuple
@@ -562,7 +567,7 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
       ("str", 5, 2.5, now(), false, Dummy(), DummyRef()),
       ("str", 5, 2.5, now(), true, Dummy(), nil),
     ]
-    proc map(x: A): B {.map.} = discard
+    proc mergeWith(x: var B, y: A) {.inplaceMap.} = discard
 
     for parameterSet in parameterSets:  
       let a: A = (
@@ -576,7 +581,8 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
       )
       
       # When
-      let result: B = map(a)
+      var result: B = default(B)
+      result.mergeWith(a)
       
       # Then
       let expected: B = (
@@ -590,14 +596,12 @@ suite "Testing map - Assignment between tuple, object and ref object (3x3 test m
       )
       
       check result == expected
-      
-      
-      
-suite "Testing map - Assignment special cases in general":
+
+suite "Testing inplace map - Assignment special cases in general":
   test """
     1. GIVEN an object type A and B where the fields of B are a subset of A 
-    WHEN an instance of A is mapped to an instance of B
-    THEN it should create an instance of B with all of its fields having the value of their name counterparts from A
+    WHEN an instance of B is inplaceMapped with an instance of A
+    THEN it should transfer the value of all fields from A to B
   """:
     # Given
     type A = object
@@ -624,7 +628,7 @@ suite "Testing map - Assignment special cases in general":
       ("str", 5, 2.5, now(), false, Dummy(), DummyRef()),
       ("str", 5, 2.5, now(), true, Dummy(), nil),
     ]
-    proc map(x: A): B {.map.} = discard
+    proc mergeWith(y: var B, x: A) {.inplaceMap.} = discard
 
     for parameterSet in parameterSets:  
       let a = A(
@@ -638,7 +642,8 @@ suite "Testing map - Assignment special cases in general":
       )
       
       # When
-      let result: B = map(a)
+      var result = B()
+      result.mergeWith(a)
       
       # Then
       let expected = B(
@@ -649,12 +654,10 @@ suite "Testing map - Assignment special cases in general":
       
       check result == expected
       
-      
-      
   test """
     2. GIVEN an object type A and B that don't share some fields
-    WHEN an instance of A is mapped to an instance of B with one of the fields receiving a constant value
-    THEN it should create an instance of B with all fields having the value of their name counterparts from A ecept for the field with the constant value
+    WHEN an instance of B is inplaceMapped with an instance of A with one of the fields receiving a constant value
+    THEN it should transfer the value of all fields from A to B except for the field with the constant value
   """:
     # Given
     type A = object
@@ -667,8 +670,8 @@ suite "Testing map - Assignment special cases in general":
       num: int
       floatNum: float
 
-    proc map(x: A): B {.map.} =
-      result.num = 20
+    proc mergeWith(y: var B, x: A) {.inplaceMap.} =
+      y.num = 20
 
     let a = A(
       str: "str",
@@ -677,7 +680,8 @@ suite "Testing map - Assignment special cases in general":
     )
     
     # When
-    let result: B = map(a)
+    var result: B = B()
+    result.mergeWith(a)
     
     # Then
     let expected = B(
@@ -692,8 +696,8 @@ suite "Testing map - Assignment special cases in general":
       
   test """
     3. GIVEN an object type A and B that don't share some fields
-    WHEN an instance of A is mapped to an instance of B with one of the fields receiving a value from a proc calculation
-    THEN it should create an instance of B with all fields having the value of their name counterparts from A except for the field with the proc calculation
+    WHEN an instance of B is inplaceMapped with an instance of A with one of the fields receiving a value from a proc calculation
+    THEN it should transfer the value of all fields from A to B except for the field with the proc calculation
   """:
     # Given
     type A = object
@@ -708,8 +712,8 @@ suite "Testing map - Assignment special cases in general":
 
     proc tripleValue(x: int): int = 3*x
     
-    proc map(x: A): B {.map.} =
-      result.num = x.num.tripleValue()
+    proc mergeWith(y: var B, x: A) {.inplaceMap.} =
+      y.num = x.num.tripleValue()
 
     let a = A(
       str: "str",
@@ -718,7 +722,8 @@ suite "Testing map - Assignment special cases in general":
     )
     
     # When
-    let result: B = map(a)
+    var result: B = B()
+    result.mergeWith(a)
     
     # Then
     let expected = B(
@@ -733,8 +738,8 @@ suite "Testing map - Assignment special cases in general":
   
   test """
     4. GIVEN an object type A, B and C that share some of their fields with D
-    WHEN an instance of A,B and C are mapped to an instance of D 
-    THEN it should create an instance of D with all fields having the value of their name counterparts from A,B and C
+    WHEN an instance of D is inplaceMapped with an instance of A, B and C
+    THEN it should transfer the value of all fields from A,B,C to D
   """:
     # Given
     type A = object
@@ -751,14 +756,15 @@ suite "Testing map - Assignment special cases in general":
       num: int
       floatNum: float
 
-    proc map(a: A, b: B, c: C): D {.map.} = discard
+    proc mergeWith(y: var D, x1: A, x2: B, x3: C) {.inplaceMap.} = discard
 
     let a = A(str: "str")
     let b = B(num: 5)
     let c = C(floatNum: 2.5)
     
     # When
-    let result: D = map(a, b, c)
+    var result: D = D()
+    result.mergeWith(a, b, c)
     
     # Then
     let expected = D(
@@ -773,8 +779,8 @@ suite "Testing map - Assignment special cases in general":
     
   test """
     5. GIVEN an object type A, B and C that all have the same field "str"
-    WHEN an instance of A and B mapped to an instance of C
-    THEN it should create an instance of C with the "str" value of the last parameter
+    WHEN an instance of C is inplaceMapped with an instance of A and B
+    THEN it should transfer the value of all fields from A, B to C with the "str" field having the value of the last parameter
   """:
     # Given
     type A = object
@@ -786,15 +792,17 @@ suite "Testing map - Assignment special cases in general":
     type C = object
       str: string
 
-    proc mapAB(a: A, b: B): C {.map.} = discard
-    proc mapBA(b: B, a: A): C {.map.} = discard
+    proc mergeWithAB(y: var C, x1: A, x2: B) {.inplaceMap.} = discard
+    proc mergeWithBA(y: var C, x1: B, x2: A) {.inplaceMap.} = discard
 
     let a = A(str: "AValue")
     let b = B(str: "BValue")
     
     # When
-    let resultAB: C = mapAB(a, b)
-    let resultBA: C = mapBA(b, a)
+    var resultAB: C = C()
+    resultAB.mergeWithAB(a, b)
+    var resultBA: C = C()
+    resultBA.mergeWithBA(b, a)
     
     # Then
     let expectedAB = C(str: "BValue")
@@ -807,8 +815,8 @@ suite "Testing map - Assignment special cases in general":
 
   test """
     6. GIVEN an object type A and B
-    WHEN an instance of A is mapped to an instance of B together with a non-object kind parameter
-    THEN it should create an instance of B with only the fields of A transferred to B
+    WHEN an instance of B is inplaceMapped with an instance of A together with a non-object kind parameter
+    THEN it should transfer the value of all fields from A to B and str being ignored
   """:
     # Given
     type A = object
@@ -817,12 +825,13 @@ suite "Testing map - Assignment special cases in general":
     type B = object
       str: string
 
-    proc map(a: A, str: string): B {.map.} = discard
+    proc mergeWith(y: var B, x: A, str: string) {.inplaceMap.} = discard
 
     let a = A(str: "str")
     
     # When
-    let result: B = map(a, "SomeStringParam")
+    var result: B = B()
+    result.mergeWith(a, "SomeStringParam")
     
     # Then
     let expected = B(str: "str")
@@ -832,8 +841,8 @@ suite "Testing map - Assignment special cases in general":
 
   test """
     7. GIVEN an object type A and B
-    WHEN an instance of A is mapped to an instance of B together with a non-object kind parameter with an assignment that makes use of the parameter
-    THEN it should create an instance of B with only the fields of A transferred to B
+    WHEN an instance of B is inplaceMapped with an instance of A together with a non-object kind parameter with an assignment that makes use of the parameter
+    THEN it should transfer the value of all fields from A to B but ultimately end up with the assigned value
   """:
     # Given
     type A = object
@@ -842,13 +851,14 @@ suite "Testing map - Assignment special cases in general":
     type B = object
       str: string
 
-    proc map(a: A, str: string): B {.map.} =
-      result.str = str
+    proc mergeWith(y: var B, x: A, str: string) {.inplaceMap.} =
+      y.str = str
 
     let a = A(str: "str")
     
     # When
-    let result: B = map(a, "SomeStringParam")
+    var result: B = B()
+    result.mergeWith(a, "SomeStringParam")
     
     # Then
     let expected = B(str: "SomeStringParam")
@@ -857,8 +867,8 @@ suite "Testing map - Assignment special cases in general":
 
   test """
     8. GIVEN an object type A and B that share fields that only match due to case insensitivity and underscore insensitivity
-    WHEN an instance of A is mapped to an instance of B
-    THEN it should create an instance of B with all fields having the value of their name counterparts from A
+    WHEN an instance of B is inplaceMapped with an instance of A
+    THEN it should transfer the value of all fields from A to B
   """:
     # Given
     type A = object
@@ -871,8 +881,8 @@ suite "Testing map - Assignment special cases in general":
       nUM: int
       float_num: float
 
-    proc map(x: A): B {.map.} =
-      result.nUM = 20
+    proc mergeWith(y: var B, x: A) {.inplaceMap.} =
+      y.nUM = 20
 
     let a = A(
       str: "str",
@@ -881,7 +891,8 @@ suite "Testing map - Assignment special cases in general":
     )
     
     # When
-    let result: B = map(a)
+    var result: B = B()
+    result.mergeWith(a)
     
     # Then
     let expected = B(
@@ -895,8 +906,8 @@ suite "Testing map - Assignment special cases in general":
 
   test """
     9. GIVEN an object type A and B that share fields that only match due to case insensitivity and underscore insensitivity
-    WHEN an instance of A is mapped to an instance of B
-    THEN it should create an instance of B with all fields having the value of their name counterparts from A
+    WHEN an instance of B is inplaceMapped with an instance of A
+    THEN it should transfer the value of all fields from A to B
   """:
     # Given
     type A = object
@@ -908,8 +919,8 @@ suite "Testing map - Assignment special cases in general":
       str2: seq[string]
       str3: seq[string]
 
-    proc map(x: A, y: seq[string]): B {.map.} =
-      result.str3 = y
+    proc mergeWith(y: var B, x: A, z: seq[string]) {.inplaceMap.} =
+      y.str3 = z
     
     let strs = @["str2", "str3"]
     let a = A(
@@ -918,7 +929,8 @@ suite "Testing map - Assignment special cases in general":
     )
     
     # When
-    let result: B = map(a, strs)
+    var result: B = B()
+    result.mergeWith(a, strs)
     
     # Then
     let expected = B(
@@ -932,10 +944,9 @@ suite "Testing map - Assignment special cases in general":
 
 
   test """
-    10. GIVEN an object type A and an object type B that share some fields on the instance 
-    WHEN an instance of A is mapped to an instance of B with a proc-body with if & case statements
-    THEN it should create an instance of B with the values assigned to it
-    NOTE: This also should always pass validation as it should be able to check for assignment behind complex statements 
+    10. GIVEN an object variant A and an object type B that share some fields on the instance 
+    WHEN an instance of B is inplaceMapped with an instance of A with a proc-body with if & case statements
+    THEN it should transfer the value of all fields from A to B and ultimately with the assigned values
   """:
     # Given
     type A = object
@@ -946,29 +957,33 @@ suite "Testing map - Assignment special cases in general":
       num: int
       isExactly5: bool
 
-    proc map(x: A): B {.map.} =
+    proc mergeWith(y: var B, x: A) {.inplaceMap.} =
       if x.num > 5:
-        result.str = "High5"
+        y.str = "High5"
       else:
-        result.str = "Low5"
+        y.str = "Low5"
 
       case x.num:
       of 1,2,3,4:
-        result.isExactly5 = false
+        y.isExactly5 = false
       of 5:
-        result.isExactly5 = true
+        y.isExactly5 = true
       of 6,7,8,9:
-        result.isExactly5 = false
+        y.isExactly5 = false
       else:
-        result.isExactly5 = false
+        y.isExactly5 = false
     
     let a1 = A(num: 3)
     let a2 = A(num: 5)
     let a3 = A(num: 7)
+    
     # When
-    let result1: B = map(a1)
-    let result2: B = map(a2)
-    let result3: B = map(a3)
+    var result1: B = B()
+    result1.mergeWith(a1)
+    var result2: B = B()
+    result2.mergeWith(a2)
+    var result3: B = B()
+    result3.mergeWith(a3)
     
     # Then
     let expected1 = B(num: 3, str: "Low5", isExactly5: false)
@@ -978,49 +993,95 @@ suite "Testing map - Assignment special cases in general":
     check result1 == expected1
     check result2 == expected2
     check result3 == expected3
-  
-
-    test """
-      11. GIVEN an object variant type A and object type B where B shares its permanent fields with A
-      WHEN an instance of A is mapped to an instance of B
-      THEN it should create an instance of B with all fields having the value of their name counterparts from A
-    """:
-      # Given
-      type Kind = enum
-        str, num
-      type A = object
-        permanent: int
-        case kind: Kind
-        of str: str: string
-        of num: num: int
-
-      type B = object
-        kind: Kind
-        permanent: int
-
-      proc map(x: A): B {.map.} = discard
+    
+    
+  test """
+    11. GIVEN an object variant type A and an object type B that share some fields on the instance 
+    WHEN an instance of B is inplaceMapped with 2 instances of A of different variant kinds
+    THEN it should transfer the value of all fields from A to B
+  """:
+    # Given
+    type Kind = enum
+      str, num
       
-      let a = A(
-        permanent: 10,
-        kind: str,
-        str: "str"
-      )
-      
-      # When
-      let result: B = map(a)
-      
-      # Then
-      let expected = B(kind: str, permanent: 10)
-      
-      check result == expected
+    type A = object
+      case kind: Kind
+      of str: str: string
+      of num: num: int
 
+    type B = object
+      kind: Kind
+      str: string
+      num: int
+
+    proc mergeWith(y: var B, x1: A, x2: A) {.inplaceMap.} = discard
+    
+    let a1 = A(
+      kind: str,
+      str: "str"
+    )
+    
+    let a2 = A(
+      kind: num,
+      num: 5
+    )
+    
+    # When
+    var result: B = B()
+    result.mergeWith(a1, a2)
+    
+    # Then
+    let expected = B(kind: num, str: "str", num: 5)
+    
+    check result == expected
+
+    
+  test """
+    12. GIVEN an object type A and B that require complex logic to map one to the other 
+    WHEN an instance of B is inplaceMapped with an instance of A
+    THEN it should transfer the value of all fields from A to B
+  """:
+    # Given
+    type Kind = enum
+      str, num
+    type A = object
+      case kind: Kind
+      of str: str: string
+      of num: num: int
+
+    type B = object
+      kind: Kind
+      str: string
+      num: int
+
+    proc mergeWith(y: var B, x1: A, x2: A) {.inplaceMap.} = discard
+    
+    let a1 = A(
+      kind: str,
+      str: "str"
+    )
+    
+    let a2 = A(
+      kind: num,
+      num: 5
+    )
+    
+    # When
+    var result: B = B()
+    result.mergeWith(a1, a2)
+
+    # Then
+    let expected = B(kind: num, str: "str", num: 5)
+    
+    check result == expected
+    
 
 when not defined(mapsterValidate):
-  suite "Testing map - Assignment special cases with no field assignments and no validation as validation would break these cases":
+  suite "Testing inplace map - Assignment special cases with no field assignments and no validation":
     test """
       1. GIVEN an object type A and B where not every field of B can be mapped to a field on A 
-      WHEN an instance of A is mapped to an instance of B
-      THEN it should create an instance of B with all of its fields having the value of their name counterparts from A and all other fields left uninitialized
+      WHEN an instance of B is inplaceMapped with an instance of A
+      THEN it should transfer the value of all fields from A to B and all other fields on B left uninitialized
     """:
       # Given
       type A = object
@@ -1046,7 +1107,7 @@ when not defined(mapsterValidate):
         ("str", -5, 2.5),
         ("str", 5, -2.5),
       ]
-      proc map(x: A): B {.map.} = discard
+      proc mergeWith(y: var B, x: A) {.inplaceMap.} = discard
 
       for parameterSet in parameterSets:  
         let a = A(
@@ -1056,7 +1117,8 @@ when not defined(mapsterValidate):
         )
         
         # When
-        let result: B = map(a)
+        var result: B = B()
+        result.mergeWith(a)
         
         # Then
         let expected = B(
@@ -1069,83 +1131,3 @@ when not defined(mapsterValidate):
         )
         
         check result == expected
-      
-      
-      
-    test """
-      2. GIVEN an object variant type A and an object type B that share some fields on the instance 
-      WHEN 2 instances of A of different variant kinds are mapped to an instance of B
-      THEN it should create an instance of B with all fields having the value of their name counterparts from A
-    """:
-      # Given
-      type Kind = enum
-        str, num
-      type A = object
-        case kind: Kind
-        of str: str: string
-        of num: num: int
-
-      type B = object
-        kind: Kind
-        str: string
-        num: int
-
-      proc map(x: A, y: A): B {.map.} = discard
-      
-      let a1 = A(
-        kind: str,
-        str: "str"
-      )
-      
-      let a2 = A(
-        kind: num,
-        num: 5
-      )
-      
-      # When
-      let result: B = map(a1, a2)
-      
-      # Then
-      let expected = B(kind: num, str: "str", num: 5)
-      
-      check result == expected
-  
-    
-    
-    test """
-      3. GIVEN an object type A and B that require complex logic to map one to the other 
-      WHEN an instance of A is mapped to an instance of B
-      THEN it should create an instance of B with all fields having the value of their name counterparts from A
-    """:
-      # Given
-      type Kind = enum
-        str, num
-      type A = object
-        case kind: Kind
-        of str: str: string
-        of num: num: int
-
-      type B = object
-        kind: Kind
-        str: string
-        num: int
-
-      proc map(x: A, y: A): B {.map.} = discard
-      
-      let a1 = A(
-        kind: str,
-        str: "str"
-      )
-      
-      let a2 = A(
-        kind: num,
-        num: 5
-      )
-      
-      # When
-      let result: B = map(a1, a2)
-      
-      # Then
-      let expected = B(kind: num, str: "str", num: 5)
-      
-      check result == expected

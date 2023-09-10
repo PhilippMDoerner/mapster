@@ -1,6 +1,8 @@
 import std/[strformat, macros, options, sequtils, terminal, sets, sugar]
 import micros
 
+proc flatten*[T](seqs: seq[seq[T]]): seq[T] = seqs.foldl(a & b, newSeq[T]())
+
 proc assertKind*(node: NimNode, kind: seq[NimNodeKind], msg: string = "") =
   ## Custom version of expectKind, uses doAssert which can never be turned off.
   ## Use this throughout procs to validate that the nodes they get are of specific kinds.
@@ -106,6 +108,7 @@ proc getFieldName(assignment: NimNode): string =
     assertKind(assignedFieldSymbol, nnkSym)
     
     return $assignedFieldSymbol
+
   else:
     error(fmt"""
       Could not get field name for assignment to object variant.
@@ -151,9 +154,11 @@ proc getVarName(assignment: NimNode): string =
       {assignment.repr}
       {assignment.treeRepr}
     """)
+
 proc getFieldsOfObjectType*(typeSym: NimNode): HashSet[string] =
   ## Takes in a nnkSym Node which represents a type-definition of an object type. 
   ## Returns a Set of all field names the object-type has.
+  ## In case of object variants, this returns all fields of all kinds.
   expectKind(typeSym, nnkSym)
   
   let obj = objectDef(typeSym)
@@ -193,13 +198,36 @@ proc getFieldsOfType*(sym: NimNode): HashSet[string] =
 
 proc getNodesOfKind*(procBody: NimNode, nodeKind: NimNodeKind): seq[NimNode] =
   for node in procBody.children:
-    let isAssignmentNode = node.kind == nodeKind
-    if isAssignmentNode:
+    let isDesiredNode = node.kind == nodeKind
+    if isDesiredNode:
       result.add(node)
     else:
-      let assignments: seq[NimNode] = getNodesOfKind(node, nnkAsgn)
-      result.add(assignments)
+      let desiredChildNodes: seq[NimNode] = getNodesOfKind(node, nodeKind)
+      result.add(desiredChildNodes)
 
+proc getVariantFields*(typeSym: NimNode): HashSet[string] =
+  ## Takes in a nnkSym Node which represents a type-definition of an object variant type.
+  ## Returns a Set of all field names the variant has that are exclusive
+  ## to a given variant kind.
+  expectKind(typeSym, nnkSym)
+
+  let typeDef: NimNode = typeSym.getImpl()
+  expectKind(typeDef, nnkTypeDef)
+  
+  let branchNodes: seq[NimNode] = typeDef.getNodesOfKind(nnkOfBranch)
+  let variantFields: seq[NimNode] = branchNodes.mapIt(it.getNodesOfKind(nnkIdentDefs)).flatten()
+  let variantFieldNames: seq[string] = variantFields.mapIt($(it[0]))
+  return variantFieldNames.toSet()
+
+proc isObjectVariant*(typSymbol: NimNode): bool =
+  ## Takes a nnkSym node and checks if it is of a type-definition
+  ## that is of an object variant.
+  typSymbol.assertKind(nnkSym)
+  let typeDef: NimNode = typSymbol.getImpl()
+  typeDef.assertKind(nnkTypeDef)
+  
+  let hasCaseStatement = typeDef.getNodesOfKind(nnkRecCase).len() > 0
+  return hasCaseStatement
 
 proc getAssignedFields*(procBody: NimNode): seq[string] =
   ## Takes in a Node which represents the proc-body of a
@@ -221,7 +249,9 @@ proc getAssignedFields*(procBody: NimNode): seq[string] =
 
 proc getParameterFields*(paramNode: NimNode, paramsToIgnore: openArray[string] = @[]): HashSet[string] =
   ## Takes in a nnkFormalParams Node which represents all parameters and the result-type of a proc definition.
-  ## Returns a set of all fields on all proc parameters that are available field.
+  ## Returns a set of all fields on all proc parameters that are available.
+  ## For object variants, all fields that are only available for specific variant-kinds are not counted for this purpose.
+
   assertKind(paramNode, nnkFormalParams)
   
   let params: seq[NimNode] = paramNode.getParameters()
@@ -237,7 +267,13 @@ proc getParameterFields*(paramNode: NimNode, paramsToIgnore: openArray[string] =
     
     assertKind(typeSym, nnkSym)
     let typeFields: HashSet[string] = typeSym.getFieldsOfType()
-    result.incl(typeFields)
+    if typeSym.isObjectVariant():
+      let variantFields: HashSet[string] = typeSym.getVariantFields()
+      let permanentFields: HashSet[string] = typeFields.difference(variantFields)
+      result.incl(permanentFields)
+    else:
+      result.incl(typeFields)
+
     
 proc getResultType*(parametersNode: NimNode): NimNode =
   ## Takes in a nnkFormalParams Node containing all parameters and the result-type of a proc definition.
@@ -338,7 +374,9 @@ proc validateFieldAssignments*(procDef: NimNode, paramsToIgnore: openArray[strin
     if not isGetingAssignedTo:
       let resultTypeStr = $paramsNode.getResultType()[0]
       error(fmt"""
-        '{resultTypeStr}.{targetField}' is never assigned a value! 
-        There is no field on a parameter that could map to '{targetField}'
+        '{resultTypeStr}.{targetField}' is not always assigned a value! 
+        There is no field on a parameter that could automatically map to '{targetField}',
         nor is there a manual assignment in the proc-body to this field!
+        Note that object-variant fields specific to one kind of variant 
+        are not considered during validation.
       """)

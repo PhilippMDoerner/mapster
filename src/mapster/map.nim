@@ -3,15 +3,15 @@ import ./utils
 
 proc mapTo*(source: auto, target: var auto) =
   when source is ref:
-    if source == nil:
-      raise newException(ValueError, "Tried to map 'nil' to object variant")
-  
+    if source.isNil:
+      raise newException(ValueError, fmt"Tried to map with 'nil' of type {$source.type()}")
+
   for sourceName, sourceField in source.getIterator():
     for targetName, targetField in target.getIterator():
       when sourceName.eqIdent(targetName) and sourceField is typeof(targetField):
         targetField = sourceField
 
-proc generateMapCall(variableName: string, resultTypeName: string): NimNode =
+proc generateMapCall(variableName: string): NimNode =
   ## generates `<variableName>.mapTo(result)
   
   return newCall(
@@ -58,7 +58,7 @@ proc generateResultInitialization(resultType: string): NimNode =
 proc toMapProcBody(procBody: NimNode, parameterNode: NimNode, paramsToIgnore: varargs[string]): NimNode =
   ## Generates a procBody NimNode of the following shape:
   ##   result = A()
-  ##   (For each object type parameter):
+  ##   (For each parameter of a type with fields):
   ##      <parameterName>.mapTo(result)
   ##   (For end)
   ##   <oldProcBody>
@@ -77,7 +77,7 @@ proc toMapProcBody(procBody: NimNode, parameterNode: NimNode, paramsToIgnore: va
   
   let mapCalls: seq[NimNode] = paramNamesWithFields
     .filterIt(it notin paramsToIgnore)
-    .mapIt(generateMapCall(it, resultTypeName))
+    .mapIt(generateMapCall(it))
 
   var newProcBody: NimNode = newStmtList()
   if resultIsObject:
