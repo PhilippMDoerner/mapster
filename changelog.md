@@ -7,6 +7,10 @@
 -   [t]—test suite improvement
 -   [d]—docs improvement
 
+## 1.1.0 (September 10, 2023)
+- [+] Add inplace map which essentially merges objects
+- [r] Change how validation works. Non permanent fields of object variants are now ignored when they're used as source for mapping
+
 ## 1.0.0 (August 19, 2023)
 - [+] Add compile-time validation of assignments
 - [r] Unify more operations between object variant and normal mapping into utils.nim
