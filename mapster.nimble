@@ -17,3 +17,10 @@ task debugTest, "Executes the tests and echo'ing the generated procs for debug p
   
 task testament, "Executes the entire test-suite with testament (slow)":
   exec "testament pattern 'tests/**/*.nim'"
+
+task book, "Builds the nimibook":
+  rmDir "docs/bookCompiled"
+  exec "nimble install -y nimib@#head nimibook@#head"
+  exec "nim c -d:release --mm:refc nbook.nim"
+  exec "./nbook --mm:refc update"
+  exec "./nbook --mm:refc build"
