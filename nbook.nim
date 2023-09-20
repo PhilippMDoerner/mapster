@@ -5,7 +5,7 @@ var book = initBookWithToc:
   entry("Mapping Individual Parameters", "basicUseage.nim")
   entry("Mapping Multiple Parameters", "multipleParameters.nim")
   entry("Mapping To Object Variants", "objectVariants.nim")
-  entry("Mapping In Place", "inplaceMap.nim")
+  entry("Mapping In Place", "inplaceMapExamples.nim")
   entry("Mapping With Validation", "mapValidation.nim")
   entry("Changelog", "changelog.nim")
 
