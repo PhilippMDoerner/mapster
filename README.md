@@ -35,4 +35,4 @@ Add Mapster to your .nimble file:
 - Named Tuple Types
 
 ## Getting Started
-Take a look at the [nimibook docs](https://philippmdoerner.github.io/mapster/bookCompiled/basicUseage.html/)!
+Take a look at the [nimibook docs](https://philippmdoerner.github.io/mapster/basicUseage.html)!
