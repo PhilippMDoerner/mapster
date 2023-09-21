@@ -5,6 +5,10 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+      
 
 # Provides the implicitly used and hidden GITHUB_TOKEN the necessary permissions to deploy github_pages
 permissions:
