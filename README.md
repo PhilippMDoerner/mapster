@@ -7,6 +7,8 @@ Very often A and B share a lot of fields and there is only a small set of except
 
 Mapster helps by adding all assignments from instance A to B to the proc for you where the field names and types are identical, allowing you to focus on the few fields that require logic.
 
+- [Documentation](https://philippmdoerner.github.io/mapster/index.html) (built with [nimibook](https://github.com/pietroppeter/nimibook))
+
 ## Installation
 
 Install Mapster with Nimble:
