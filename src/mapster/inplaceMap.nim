@@ -99,7 +99,7 @@ macro inplaceMap*(procDef: typed): untyped =
   validateMergeProcDef(procDef)
   return createMergeProc(procDef)
 
-macro transferExcept*(exclude: varargs[string], procDef: typed): untyped =
+macro inplaceMapExcept*(exclude: varargs[string], procDef: typed): untyped =
   validateMergeProcDef(procDef)
 
   let exclusions: seq[string] = exclude.mapIt($it) # For some reason exclude gets turned into NimNode, this turns that back  

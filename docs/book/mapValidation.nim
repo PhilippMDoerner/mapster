@@ -26,8 +26,8 @@ nbCode:
     result.field2 = "Constant Value"
   
   let a = A(field1: "test")
-  assert a.map2().field1 == a.field1
-  assert a.map2().field2 == "Constant Value"
+  doAssert a.map2().field1 == a.field1
+  doAssert a.map2().field2 == "Constant Value"
 
 nbText: """
 The above will compile normally without any flag.
@@ -54,7 +54,7 @@ nbCode:
   proc mapCToA(x: C): A {.map.} = discard
 
   let c = C(field1: "Test", kind: k1, field2: "Other")
-  assert c.mapCToA() == A(field1: "Test")
+  doAssert c.mapCToA() == A(field1: "Test")
   
 nbText: """
 This works because the `field1` will always exist on every possible instance of C.
@@ -62,7 +62,7 @@ The following will not compile with validation enabled, because it can not be gu
 """
 nbCode:
   proc mapCToB(x: C): B {.map.} = discard
-  assert c.mapCToB() == B(field1: "Test", field2: "Other")
+  doAssert c.mapCToB() == B(field1: "Test", field2: "Other")
 
 
 nbText: """
@@ -102,8 +102,8 @@ nbCode:
 
   let d = D(field1: "field1", field2: "field2", field3: "field3")
   
-  assert d.mapDToC(Kind.k1) == C(kind: k1, field1: "field1", field2: "field2")
-  assert d.mapDToC(Kind.k2) == C(kind: k2, field1: "field1", field3: "field3")
+  doAssert d.mapDToC(Kind.k1) == C(kind: k1, field1: "field1", field2: "field2")
+  doAssert d.mapDToC(Kind.k2) == C(kind: k2, field1: "field1", field3: "field3")
 
 nbText: """
 This compiles because `D` has all the fields to map to C of kind `k1`, but also to C of kind `k2`.
@@ -140,7 +140,7 @@ nbCode:
     
   proc mapCToF(x: C, kindParam: Kind): F {.mapVariant: "kindParam".} = discard
 
-  assert c.mapCToF(Kind.k1) == F(kind: Kind.k1, field1: "Test")
+  doAssert c.mapCToF(Kind.k1) == F(kind: Kind.k1, field1: "Test")
   
 nbText: """  
 

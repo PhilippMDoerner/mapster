@@ -90,6 +90,9 @@ nbCode:
   let expected3 = C3(str: "str", num: 0)
   
   doAssert myC3 == expected3
-  
+
+nbText: """
+Note: Parameter that don't have fields themselves (such as strings or ints) are automatically ignored or rather they are never explicitly mapped.
+"""
 
 nbSave

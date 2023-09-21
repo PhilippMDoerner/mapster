@@ -29,7 +29,7 @@ nbCode:
   var b = B(str: "Something")
   
   a.mergeWithB(b)
-  assert a == A(str: "Something")
+  doAssert a == A(str: "Something")
   
 nbText: """
 ### Multiple parameters
@@ -54,8 +54,35 @@ nbCode:
   let expectedAB = C(str: "BValue")
   let expectedBA = C(str: "AValue")
   
-  assert resultAB == expectedAB
-  assert resultBA == expectedBA
+  doAssert resultAB == expectedAB
+  doAssert resultBA == expectedBA
 
+nbText: """
+### Excluding/ignoring parameters
+Also similar `map` with `mapExcept` you can ignored parameters from automatically getting inplace-mapped into your object.
+"""
+
+nbCode:
+  import mapster
+  
+  type A3 = object
+    str: string
+
+  type B3 = object
+    num: int
+    
+  type C3 = object
+    str: string
+    num: int
+
+  let a3 = A3(str: "str")
+  let b3 = B3(num: 5)
+
+  proc myMapProc(a: A3, b: B3): C3 {.mapExcept: "b".} = discard
+
+  let myC3: C3 = myMapProc(a3, b3)
+  let expected3 = C3(str: "str", num: 0)
+  
+  doAssert myC3 == expected3
 
 nbSave
