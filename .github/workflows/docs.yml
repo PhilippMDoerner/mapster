@@ -17,8 +17,11 @@ jobs:
   api-docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: jiro4989/setup-nim-action@v1
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+      - name: Setup nim
+        uses: jiro4989/setup-nim-action@v1
         with:
           nim-version: '2.0.0'
 
