@@ -7,6 +7,11 @@
 -   [t]—test suite improvement
 -   [d]—docs improvement
 
+## 1.2.0 (September 21, 2023)
+- [d] Add nimibook docs
+- [d] migrate docs in Readme over to nimibook docs
+- [+] Add inplace map except
+
 ## 1.1.0 (September 10, 2023)
 - [+] Add inplace map which essentially merges objects
 - [r] Change how validation works. Non permanent fields of object variants are now ignored when they're used as source for mapping
