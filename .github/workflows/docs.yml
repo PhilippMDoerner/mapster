@@ -3,8 +3,8 @@ name: github pages
 # Execute this workflow only for Pushes to your main branch, not for PRs
 on:
   push:
-	branches:
-	  - main
+    branches:
+      - main
 
 # Provides the implicitly used and hidden GITHUB_TOKEN the necessary permissions to deploy github_pages
 permissions:
