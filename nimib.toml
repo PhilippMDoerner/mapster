@@ -1,0 +1,10 @@
+[nimib]
+srcDir = "docs/book"
+homeDir = "docs/bookCompiled"
+
+[nimibook]
+language = "English"
+title = "Mapster"
+description = "Generating procs to map types from A to B in a flash"
+git_repository_url = "https://github.com/PhilippMDoerner/mapster.git"
+
