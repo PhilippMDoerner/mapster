@@ -37,7 +37,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: iffy/install-nim@v4
+      - uses: iffy/install-nim@v5
         with:
           version: ${{ matrix.nimversion }}
         env:
