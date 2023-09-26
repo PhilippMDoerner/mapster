@@ -59,7 +59,8 @@ nbCode:
 
 nbText: """
 ### Excluding/ignoring parameters
-Also similar `map` with `mapExcept` you can ignored parameters from automatically getting inplace-mapped into your object.
+Also similar to `map` with `mapExcept` there is `inplaceMapExcept` for `inplaceMap`.
+This allows you to ignore parameters from automatically getting inplace-mapped into your object.
 """
 
 nbCode:
@@ -78,10 +79,11 @@ nbCode:
   let a3 = A3(str: "str")
   let b3 = B3(num: 5)
 
-  proc myMapProc(a: A3, b: B3): C3 {.mapExcept: "b".} = discard
+  proc mergeWith(c: var C3, a: A3, b: B3) {.inplaceMapExcept: "b".} = discard
 
-  let myC3: C3 = myMapProc(a3, b3)
-  let expected3 = C3(str: "str", num: 0)
+  var myC3: C3 = C3(str: "", num: 2)
+  myC3.mergeWith(a3, b3)
+  let expected3 = C3(str: "str", num: 2)
   
   doAssert myC3 == expected3
 
