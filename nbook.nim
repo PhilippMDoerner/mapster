@@ -2,7 +2,7 @@ import nimibook
 
 var book = initBookWithToc:
   entry("Welcome To Mapster!", "index.nim")
-  entry("Mapping Individual Parameters", "basicUseage.nim")
+  entry("Mapping Individual Parameters", "basicUsage.nim")
   entry("Mapping Multiple Parameters", "multipleParameters.nim")
   entry("Mapping To Object Variants", "objectVariants.nim")
   entry("Mapping In Place", "inplaceMapExamples.nim")

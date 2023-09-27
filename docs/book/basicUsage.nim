@@ -4,7 +4,7 @@ import nimib, nimibook
 nbInit(theme = useNimibook)
 
 nbText: """
-## Basic Useage
+## Basic Usage
 Simply define a proc that takes in parameters with fields (aka "sources") and outputs a object/ref object/named tuple value.
 Then annotate it with the `{.map.}` pragma and you're done.
 

@@ -4,7 +4,7 @@ nbInit(theme = useNimibook)
 
 nbText: """
 ## Mapping objects in place (aka merging 2 objects)
-### Basic Useage
+### Basic Usage
 Instead of creating a new object you may want to update *some* of the fields on an instance of `A` with the values contained in `B`.
 
 This can be done via the `inplaceMap` pragma.

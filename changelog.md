@@ -24,7 +24,7 @@
 
 ## 0.2.0 (August 13, 2023)
 - [+] Add mapping of object variants
-- [r] Improve error messages for wrong useage
+- [r] Improve error messages for wrong usage
 
 ## 0.1.3 (August 11, 2023)
 - [f] Fix seq types in parameters bricking map proc body generation
