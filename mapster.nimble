@@ -22,5 +22,6 @@ task book, "Builds the nimibook":
   rmDir "docs/bookCompiled"
   exec "nimble install -y nimib@#head nimibook@#head"
   exec "nim c -d:release --mm:refc nbook.nim"
+  echo "BUILT NIMIBOOK BINARY"
   exec "./nbook --path:./src --mm:refc update"
   exec "./nbook --path:./src --mm:refc build"
